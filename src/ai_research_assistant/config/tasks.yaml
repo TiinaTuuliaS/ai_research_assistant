@@ -1,17 +1,38 @@
 research_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
+    Research the topic: {topic}.
+    Focus on:
+    - Market overview
+    - Key competitors
+    - Current and rising trends
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    A detailed research summary.
 
-reporting_task:
+analysis_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Analyze the research and identify:
+    - Market size
+    - Key competitors
+    - Trends and opportunities
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    Structured analysis.
+
+strategy_task:
+  description: >
+    Based on the analysis, provide:
+    - Opportunities
+    - Risks
+    - Strategic recommendations
+    - Aproximate starting budget
+  expected_output: >
+    Actionable strategy.
+
+report_task:
+  description: >
+    Combine everything into a structured report with headings:
+    - Overview
+    - Market Analysis
+    - Strategy
+    - Conclusion
+  expected_output: >
+    Final professional report.

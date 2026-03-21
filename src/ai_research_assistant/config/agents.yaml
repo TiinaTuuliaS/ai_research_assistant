@@ -4,7 +4,7 @@ researcher:
   goal: >
     Find relevant and up-to-date information about the given topic using web search.
   backstory: >
-    You are an expert at gathering information from the internet and identifying trends.
+    You are an expert at gathering information from the internet and identifying current and rising trends.
 
 analyst:
   role: >
