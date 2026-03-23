@@ -1,3 +1,3 @@
-from crewai.tools import SerperDevTool
+from crewai_tools import SerperDevTool
 
 search_tool = SerperDevTool()

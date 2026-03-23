@@ -1,29 +1,34 @@
 #!/usr/bin/env python
 import sys
 import warnings
-
+import os
 from datetime import datetime
 
-from ai_research_assistant.crew import AiResearchAssistant
+from dotenv import load_dotenv
+load_dotenv()
+
+print("OPENAI:", os.getenv("OPENAI_API_KEY"))
+
+from .crew import AiResearchAssistant
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
-# This main file is intended to be a way for you to run your
-# crew locally, so refrain from adding unnecessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
 
 def run():
     """
-    Run the crew.
+    Run the crew interactively.
     """
+    topic = input("Anna tutkimusaihe: ")
+
     inputs = {
-        'topic': 'AI LLMs',
+        'topic': topic,
         'current_year': str(datetime.now().year)
     }
 
     try:
-        AiResearchAssistant().crew().kickoff(inputs=inputs)
+        result = AiResearchAssistant().crew().kickoff(inputs=inputs)
+        print("\n\n=== RAPORTTI ===\n")
+        print(result)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
@@ -36,11 +41,16 @@ def train():
         "topic": "AI LLMs",
         'current_year': str(datetime.now().year)
     }
-    try:
-        AiResearchAssistant().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
 
+    try:
+        AiResearchAssistant().crew().train(
+            n_iterations=int(sys.argv[1]),
+            filename=sys.argv[2],
+            inputs=inputs
+        )
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
+
 
 def replay():
     """
@@ -48,13 +58,13 @@ def replay():
     """
     try:
         AiResearchAssistant().crew().replay(task_id=sys.argv[1])
-
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
+
 def test():
     """
-    Test the crew execution and returns the results.
+    Test the crew execution and return results.
     """
     inputs = {
         "topic": "AI LLMs",
@@ -62,10 +72,14 @@ def test():
     }
 
     try:
-        AiResearchAssistant().crew().test(n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs)
-
+        AiResearchAssistant().crew().test(
+            n_iterations=int(sys.argv[1]),
+            eval_llm=sys.argv[2],
+            inputs=inputs
+        )
     except Exception as e:
         raise Exception(f"An error occurred while testing the crew: {e}")
+
 
 def run_with_trigger():
     """
@@ -92,3 +106,8 @@ def run_with_trigger():
         return result
     except Exception as e:
         raise Exception(f"An error occurred while running the crew with trigger: {e}")
+
+
+# 🔥 TÄRKEIN OSA (tämä puuttui sinulta)
+if __name__ == "__main__":
+    run()
