@@ -6,7 +6,7 @@ research_task:
     - Key competitors
     - Current and rising trends
   expected_output: >
-    A detailed research summary.
+    A detailed research summary. Use {language}.
 
 analysis_task:
   description: >
@@ -15,7 +15,7 @@ analysis_task:
     - Key competitors
     - Trends and opportunities
   expected_output: >
-    Structured analysis.
+    Structured analysis. Use {language}.
 
 strategy_task:
   description: >
@@ -23,9 +23,8 @@ strategy_task:
     - Opportunities
     - Risks
     - Strategic recommendations
-    - Aproximate starting budget
   expected_output: >
-    Actionable strategy.
+    Actionable strategy. Use {language}.
 
 report_task:
   description: >
@@ -35,4 +34,4 @@ report_task:
     - Strategy
     - Conclusion
   expected_output: >
-    Final professional report.
+    Final professional report. Use {language}.
