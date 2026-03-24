@@ -7,8 +7,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
-print("OPENAI:", os.getenv("OPENAI_API_KEY"))
-
 from .crew import AiResearchAssistant
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
@@ -27,8 +25,21 @@ def run():
 
     try:
         result = AiResearchAssistant().crew().kickoff(inputs=inputs)
+
         print("\n\n=== RAPORTTI ===\n")
         print(result)
+
+        # 🔥 TALLENNUS
+        import os
+        os.makedirs("reports", exist_ok=True)
+
+        filename = f"reports/report_{topic.replace(' ', '_')}.txt"
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(str(result))
+
+        print(f"\nRaportti tallennettu tiedostoon: {filename}")
+
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
