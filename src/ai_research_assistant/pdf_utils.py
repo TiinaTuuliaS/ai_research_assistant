@@ -6,7 +6,9 @@ import os
 def create_pdf(report_text, filename):
     os.makedirs("reports", exist_ok=True)
 
-    doc = SimpleDocTemplate(filename, pagesize=A4)
+    filepath = f"reports/{filename}"
+
+    doc = SimpleDocTemplate(filepath, pagesize=A4)
     styles = getSampleStyleSheet()
 
     content = []
@@ -17,4 +19,4 @@ def create_pdf(report_text, filename):
 
     doc.build(content)
 
-    return filename
+    return filepath  # 🔥 TÄRKEÄ
