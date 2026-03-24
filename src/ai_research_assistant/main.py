@@ -3,6 +3,7 @@ import sys
 import warnings
 import os
 from datetime import datetime
+from .pdf_utils import create_pdf
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -29,16 +30,22 @@ def run():
         print("\n\n=== RAPORTTI ===\n")
         print(result)
 
-        # 🔥 TALLENNUS
-        import os
+        # LUO reports-kansio
         os.makedirs("reports", exist_ok=True)
 
-        filename = f"reports/report_{topic.replace(' ', '_')}.txt"
+        # 🔹 TXT tallennus
+        txt_filename = f"reports/report_{topic.replace(' ', '_')}.txt"
 
-        with open(filename, "w", encoding="utf-8") as f:
+        with open(txt_filename, "w", encoding="utf-8") as f:
             f.write(str(result))
 
-        print(f"\nRaportti tallennettu tiedostoon: {filename}")
+        print(f"\nTXT tallennettu: {txt_filename}")
+
+        # 🔥 PDF tallennus
+        pdf_filename = f"report_{topic.replace(' ', '_')}.pdf"
+        pdf_path = create_pdf(str(result), pdf_filename)
+
+        print(f"PDF tallennettu: {pdf_path}")
 
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
@@ -119,6 +126,6 @@ def run_with_trigger():
         raise Exception(f"An error occurred while running the crew with trigger: {e}")
 
 
-# 🔥 TÄRKEIN OSA (tämä puuttui sinulta)
+
 if __name__ == "__main__":
     run()
