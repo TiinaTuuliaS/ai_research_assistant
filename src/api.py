@@ -2,9 +2,13 @@ from fastapi import FastAPI
 from datetime import datetime
 import os
 import re
+from .database import SessionLocal, engine
+from .models import Research, Base
 
 from src.ai_research_assistant.crew import AiResearchAssistant
 from src.ai_research_assistant.pdf_utils import create_pdf
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -26,36 +30,43 @@ def root():
 
 
 @app.post("/research")
-def run_research(data: dict):
-    topic = data.get("topic", "").strip()
+def research(data: dict):
+    topic = data.get("topic")
     language = data.get("language", "suomi")
-
-    if not topic:
-        return {"error": "Anna tutkimusaihe"}
 
     inputs = {
         "topic": topic,
-        "current_year": str(datetime.now().year),
+        "current_year": "2026",
         "language": language
     }
 
     result = AiResearchAssistant().crew().kickoff(inputs=inputs)
 
-    os.makedirs("reports", exist_ok=True)
+    # 🔥 TALLENNUS
+    db = SessionLocal()
 
-    safe_topic = re.sub(r'[^a-zA-Z0-9_]', '', topic.replace(" ", "_")).lower()
+    new_research = Research(
+        topic=topic,
+        result=str(result)
+    )
 
-    # TXT
-    txt_path = f"reports/{safe_topic}.txt"
-    with open(txt_path, "w", encoding="utf-8") as f:
-        f.write(str(result))
+    db.add(new_research)
+    db.commit()
+    db.close()
 
-    # PDF
-    pdf_filename = f"{safe_topic}.pdf"
-    pdf_path = create_pdf(str(result), pdf_filename)
+    return {"result": str(result)}
 
-    return {
-        "result": str(result),
-        "txt_path": txt_path,
-        "pdf_path": pdf_path
-    }
+@app.get("/researches")
+def get_researches():
+    db = SessionLocal()
+    researches = db.query(Research).all()
+    db.close()
+
+    return [
+        {
+            "id": r.id,
+            "topic": r.topic,
+            "result": r.result
+        }
+        for r in researches
+    ]
