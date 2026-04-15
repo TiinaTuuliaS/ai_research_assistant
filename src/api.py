@@ -2,17 +2,19 @@ from fastapi import FastAPI
 from datetime import datetime
 import os
 import re
+
 from .database import SessionLocal, engine
-from .models import Research, Base
+from .models import Research, Base, User
 
 from src.ai_research_assistant.crew import AiResearchAssistant
 from src.ai_research_assistant.pdf_utils import create_pdf
 
+# 🔥 Luo taulut
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# 🔥 CORS (tärkeä Reactille)
+# 🔥 CORS (Reactia varten)
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -23,16 +25,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# ======================
+# ROOT
+# ======================
 @app.get("/")
 def root():
     return {"message": "API toimii"}
 
+# ======================
+# SIGNUP
+# ======================
+@app.post("/signup")
+def signup(data: dict):
+    db = SessionLocal()
 
+    user = User(
+        username=data["username"],
+        password=data["password"]
+    )
+
+    db.add(user)
+    db.commit()
+    db.close()
+
+    return {"message": "User created"}
+
+# ======================
+# LOGIN
+# ======================
+@app.post("/login")
+def login(data: dict):
+    db = SessionLocal()
+
+    user = db.query(User).filter(
+        User.username == data["username"],
+        User.password == data["password"]
+    ).first()
+
+    db.close()
+
+    if user:
+        return {"user_id": user.id}
+
+    return {"error": "Invalid credentials"}
+
+# ======================
+# RESEARCH
+# ======================
 @app.post("/research")
 def research(data: dict):
     topic = data.get("topic")
     language = data.get("language", "suomi")
+    user_id = data.get("user_id")
 
     inputs = {
         "topic": topic,
@@ -42,12 +86,12 @@ def research(data: dict):
 
     result = AiResearchAssistant().crew().kickoff(inputs=inputs)
 
-    # 🔥 TALLENNUS
     db = SessionLocal()
 
     new_research = Research(
         topic=topic,
-        result=str(result)
+        result=str(result),
+        user_id=user_id
     )
 
     db.add(new_research)
@@ -56,10 +100,17 @@ def research(data: dict):
 
     return {"result": str(result)}
 
-@app.get("/researches")
-def get_researches():
+# ======================
+# GET USER RESEARCHES
+# ======================
+@app.get("/researches/{user_id}")
+def get_researches(user_id: int):
     db = SessionLocal()
-    researches = db.query(Research).all()
+
+    researches = db.query(Research).filter(
+        Research.user_id == user_id
+    ).all()
+
     db.close()
 
     return [

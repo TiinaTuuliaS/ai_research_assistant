@@ -6,4 +6,12 @@ class Research(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     topic = Column(String)
-    result = Column(Text) 
+    result = Column(Text)
+    user_id = Column(Integer)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True)
+    password = Column(String)
