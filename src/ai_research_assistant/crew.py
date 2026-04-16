@@ -49,6 +49,14 @@ class AiResearchAssistant():
             llm=llm,
             verbose=True
         )
+    
+    @agent
+    def trend_analyst(self) -> Agent:
+        return Agent(
+            config=self.agents_config['trend_analyst'],
+            llm=llm,
+            verbose=True
+    )
 
     # 🔥 TASKS
 
@@ -57,6 +65,13 @@ class AiResearchAssistant():
         return Task(
         config=self.tasks_config['research_task'],
         agent=self.researcher()
+    )
+
+    @task
+    def trend_task(self) -> Task:
+        return Task(
+        config=self.tasks_config['trend_task'],
+        agent=self.trend_analyst()
     )
 
     @task

@@ -1,37 +1,83 @@
 research_task:
   description: >
     Research the topic: {topic}.
+
     Focus on:
     - Market overview
     - Key competitors
-    - Current and rising trends
+    - Existing industry data
+
+    Do NOT deeply analyze trends yet, focus on factual information gathering.
+
   expected_output: >
     A detailed research summary. Use {language}.
 
+
+trend_task:
+  description: >
+    Analyze current and emerging trends related to the topic: {topic}.
+
+    Focus on:
+    - What is currently trending
+    - What is gaining popularity
+    - Early-stage or emerging trends
+    - Social media, search behavior, and consumer interest
+
+    Include concrete examples (products, platforms, behaviors).
+
+  expected_output: >
+    A clear and insightful trend analysis. Use {language}.
+
+
 analysis_task:
   description: >
-    Analyze the research and identify:
+    Analyze the market using the research and trend insights.
+
+    Combine:
+    - Research findings
+    - Trend analysis
+
+    Identify:
     - Market size
     - Key competitors
-    - Trends and opportunities
+    - Major trends
+    - Opportunities driven by trends
+
   expected_output: >
-    Structured analysis. Use {language}.
+    Structured market analysis with integrated trends. Use {language}.
+
 
 strategy_task:
   description: >
     Based on the analysis, provide:
-    - Opportunities
+
+    - Business opportunities
     - Risks
     - Strategic recommendations
+
+    Consider especially:
+    - Emerging trends
+    - Competitive positioning
+
   expected_output: >
     Actionable strategy. Use {language}.
 
+
 report_task:
   description: >
-    Combine everything into a structured report with headings:
+    Create a structured professional report using:
+
+    - Research findings
+    - Trend analysis
+    - Market analysis
+    - Strategy
+
+    Use headings:
     - Overview
+    - Trends
     - Market Analysis
     - Strategy
     - Conclusion
+
   expected_output: >
-    Final professional report. Use {language}.
+    Final polished report. Use {language}.

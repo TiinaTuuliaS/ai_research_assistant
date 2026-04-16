@@ -35,13 +35,16 @@ def root():
 # ======================
 # SIGNUP
 # ======================
+# ======================
+# SIGNUP
+# ======================
 @app.post("/signup")
 def signup(data: dict):
     db = SessionLocal()
 
     user = User(
-        username=data["username"],
-        password=data["password"]
+        email=data.get("email"),
+        password=data.get("password")
     )
 
     db.add(user)
@@ -55,19 +58,20 @@ def signup(data: dict):
 # ======================
 @app.post("/login")
 def login(data: dict):
+    email = data.get("email")
+    password = data.get("password")
+
     db = SessionLocal()
 
-    user = db.query(User).filter(
-        User.username == data["username"],
-        User.password == data["password"]
-    ).first()
+    user = db.query(User).filter(User.email == email).first()
 
-    db.close()
+    if not user:
+        return {"error": "user not found"}
 
-    if user:
-        return {"user_id": user.id}
+    if user.password != password:
+        return {"error": "wrong password"}
 
-    return {"error": "Invalid credentials"}
+    return {"user_id": user.id}
 
 # ======================
 # RESEARCH
