@@ -50,6 +50,12 @@ This ensures generated code always matches the version actually installed, not s
 
 ## Quick Reference
 
+### Live documentation note (2026-09-25)
+The live CrewAI documentation now describes a JSON-first default scaffold.
+Use `crewai create crew <name> --classic` for the Python/YAML scaffold used here.
+This project remains pinned to installed CrewAI 1.10.1; PyPI reports 1.15.22.
+Do not apply APIs from a newer release without checking compatibility with 1.10.1.
+
 ```bash
 # Package management (always use uv)
 uv add <package>          # Add dependency

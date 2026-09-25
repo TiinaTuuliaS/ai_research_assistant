@@ -1,3 +1,10 @@
 .env
 __pycache__/
 .DS_Store
+.venv/
+*.db
+*.db-*
+*.sqlite*
+.runtime/
+ai-research-frontend/node_modules/
+ai-research-frontend/build/

@@ -1,54 +1,94 @@
-# AiResearchAssistant Crew
+# AI Markkinatutkimusassistentti
 
-Welcome to the AiResearchAssistant Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+React-käyttöliittymä, FastAPI-palvelin, SQLite-tietokanta ja viiden CrewAI-agentin
+tutkimusprosessi. Agentit keräävät tietoa, tutkivat trendejä, analysoivat markkinoita,
+muodostavat strategian ja kirjoittavat lähteistetyn raportin.
 
-## Installation
+## Käynnistys
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+Python >=3.10,<3.14 ja Node >=20. Python-paketit hallitaan uv:lla.
 
-First, if you haven't already, install uv:
+1. `uv sync`
+2. Kopioi `.env.example` tiedostoksi `.env`, jos omaa `.env`-tiedostoa ei vielä ole.
+   Aseta `OPENAI_API_KEY` ja `SERPER_API_KEY`. Älä tallenna avaimia Gitiin.
+3. Käynnistä projektin juuresta backend:
+   `uv run uvicorn src.api:app --host 127.0.0.1 --port 8000`
+4. Avaa toinen pääte hakemistoon `ai-research-frontend`, suorita `npm install`
+   ja `npm start`.
+5. Avaa http://127.0.0.1:3000 tai http://localhost:3000.
 
-```bash
-pip install uv
+Käyttöliittymä käyttää oletuksena selaimen omaa hostnamea ja porttia 8000,
+jotta evästeet toimivat sekä localhost- että 127.0.0.1-osoitteilla.
+`REACT_APP_API_URL` voi korvata rajapinnan osoitteen käyttöliittymää käynnistettäessä
+tai käännettäessä. Backendin `ALLOWED_ORIGINS` on pilkuin erotettu sallittujen
+käyttöliittymäosoitteiden lista. HTTPS-käytössä aseta `COOKIE_SECURE=true` ja käytä
+käyttöliittymälle ja API:lle samaa sivustoa (SameSite=strict).
+
+## Kirjautuminen ja tiedot
+
+- Uusi salasana vaatii vähintään 12 merkkiä. Tunnus voi olla sähköposti tai käyttäjätunnus.
+- Salasanat tallennetaan suolattuina PBKDF2-SHA256-tiivisteinä (600 000 kierrosta).
+- Ensimmäinen päivitetyn backendin käynnistys muuntaa vanhat selväkieliset salasanat
+  samassa tietokannassa. Käyttäjätunnisteet, aiemmat salasanat ja raportit säilyvät käytettävinä.
+- Istunto on 12 tunnin HttpOnly/SameSite-eväste. Tietokantaan tallennetaan vain
+  satunnaisen istuntotunnisteen SHA-256-tiiviste. Uloskirjautuminen mitätöi istunnon.
+- Selain tarkistaa kirjautumisen `/me`-reitiltä. localStorage ei sisällä istuntoa
+  tai raportteja; vanhat `user`- ja `selectedResearch`-arvot poistetaan.
+- Raporttien omistaja määräytyy palvelimen istunnosta. `/researches` palauttaa
+  vain omat raportit. Vanha `/researches/{user_id}` vaatii saman omistajan istunnon.
+- Kirjoittavat API-pyynnöt vaativat otsakkeen `X-Requested-With: ResearchApp`.
+  Selain lähettää evästeen asetuksella `credentials: include`. CORS ja Origin-tarkistus
+  sallivat vain määritellyt käyttöliittymät.
+- Virheellinen tai vanhentunut istunto palauttaa 401, kielletty pääsy 403,
+  virheellinen syöte 422 ja epäonnistunut tutkimus 502.
+
+Tietokannan oletussijainti on projektin juuren `app.db`; `DATABASE_URL` voi korvata sen.
+Sovellus ja testit käyttävät SQLitea. Tietokanta on poistettu Gitin seurannasta
+ja tietokantatiedostot ohitetaan jatkossa. Tämä ei poista aiempaa `app.db`-sisältöä
+Git-historiasta. Jos tietokanta on jo jaettu, siinä olleet salasanat tulee vaihtaa;
+Git-historian puhdistusta ei ole tehty automaattisesti.
+
+## Tutkimus ja lähteet
+
+Tutkija ja trendianalyytikko käyttävät Serper-verkkohakua. Jokaisella tutkimusajolla
+on oma lähderekisteri, johon kirjataan hausta saadut URL:t, otsikot, katkelmat ja
+hakupäivä. Agentit säilyttävät lähteet tehtäväketjun läpi.
+
+Lopullisen raportin tarkistin vaatii vähintään kaksi erillistä lähdelinkkiä
+tekstin yhteyteen ja vastaavan Lähteet/Sources-osion. Se hylkää linkit, joita ei
+saatu kyseisen ajon hakutuloksista, ja muodostaa lähdeluettelon hakujen metatiedoista.
+CrewAI yrittää korjata virheellisen raportin enintään kahdesti; epäonnistunutta
+raporttia ei tallenneta. Vanhoja raportteja ei muuteta tai lähteistetä jälkikäteen.
+
+Tarkistus varmistaa linkkien alkuperän, ei jokaisen väitteen totuutta. Kokonaisia
+verkkosivuja ei lueta: raportissa kerrotaan hakutuloskatkelmiin perustuvan aineiston
+rajoituksista. Julkaisemattomia markkinalukuja ei pidä keksiä. Käyttöliittymän
+etenemispalkki on ajastettu arvio, ei backendin reaaliaikainen tilatieto.
+
+Reactista raportti ladataan TXT-tiedostona. Erillinen Gradio-käyttöliittymä
+(`uv run python -m ai_research_assistant.app`) ja komentorivi (`uv run run_crew`)
+tukevat TXT/PDF-tallennusta. Ne ovat paikallisia vaihtoehtoja, eivät autentikoidun
+FastAPI-palvelun reittejä; älä julkaise Gradio-sovellusta erikseen ilman suojausta.
+
+## Testit
+
+Projektin juuressa:
+
+```powershell
+uv run python -m unittest discover -s tests -v
 ```
 
-Next, navigate to your project directory and install the dependencies:
+Testit käyttävät erillistä tilapäistietokantaa ja korvaavat ulkoisen tutkimusajon.
+Ne tarkistavat salasanojen muunnoksen, istunnot, uloskirjautumisen, vanhenemisen,
+käyttöoikeudet, CSRF-tarkistukset sekä lähdelinkkien alkuperän. Ne eivät veloita
+tekoäly- tai hakupalveluita eivätkä muuta omaa `app.db`-tietokantaa.
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+Hakemistossa `ai-research-frontend`:
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/ai_research_assistant/config/agents.yaml` to define your agents
-- Modify `src/ai_research_assistant/config/tasks.yaml` to define your tasks
-- Modify `src/ai_research_assistant/crew.py` to add your own logic, tools and specific args
-- Modify `src/ai_research_assistant/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
-
-```bash
-$ crewai run
+```powershell
+npm test -- --watchAll=false --runInBand
+npm run build
 ```
 
-This command initializes the ai_research_assistant Crew, assembling the agents and assigning them tasks as defined in your configuration.
-
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
-
-## Understanding Your Crew
-
-The ai_research_assistant Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
-
-## Support
-
-For support, questions, or feedback regarding the AiResearchAssistant Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
+Käyttöliittymätestit kattavat historian hakujen määrän, vanhojen tietojen erottelun,
+pyyntöjen keskeytyksen, virhetilat ja istunnon palautuksen/uloskirjautumisen.
