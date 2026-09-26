@@ -1,107 +1,29 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { api } from "../api";
 
-function Signup() {
+export default function Signup({ onCreated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const signup = async () => {
+  const [error, setError] = useState("");
+  const signup = async event => {
+    event.preventDefault();
     if (loading) return;
-    if (!email.trim() || password.length < 12) {
-      alert("Anna tunnus ja vähintään 12 merkin salasana.");
-      return;
-    }
-
-    setLoading(true);
+    setLoading(true); setError("");
     try {
-      await api("/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-      });
-
-      alert("Tili luotu! Voit kirjautua.");
-
-      // 🔥 tyhjennetään kentät
-      setEmail("");
-      setPassword("");
-
-    } catch (error) {
-      alert(error.message || "Ei yhteyttä backendiin");
-    } finally {
-      setLoading(false);
-    }
+      await api("/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+      onCreated();
+    } catch (error) { setError(error.message || "Tilin luonti epäonnistui."); }
+    finally { setLoading(false); }
   };
-
-  return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h2>✨ Luo tili</h2>
-
-        <input
-          style={styles.input}
-          placeholder="Sähköposti tai käyttäjätunnus"
-          autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          style={styles.input}
-          type="password"
-          autoComplete="new-password"
-          placeholder="Salasana (vähintään 12 merkkiä)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button style={styles.button} onClick={signup} disabled={loading}>
-          Rekisteröidy
-        </button>
-      </div>
-    </div>
-  );
+  return <form className="panel auth-card" onSubmit={signup}>
+    <h1>Luo tili</h1>
+    <p>Tallenna tutkimuksesi ja palaa suunnitelmiin myöhemmin.</p>
+    {error && <p role="alert" className="error">{error}</p>}
+    <label htmlFor="signup-email">Sähköposti tai käyttäjätunnus</label>
+    <input id="signup-email" autoComplete="username" required maxLength={254} value={email} onChange={e => setEmail(e.target.value)} />
+    <label htmlFor="signup-password">Salasana (vähintään 12 merkkiä)</label>
+    <input id="signup-password" type="password" autoComplete="new-password" required minLength={12} maxLength={1024} value={password} onChange={e => setPassword(e.target.value)} />
+    <button className="button primary" disabled={loading}>{loading ? "Luodaan tiliä…" : "Luo tili"}</button>
+  </form>;
 }
-
-const styles = {
-  page: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f5f7fb"
-  },
-
-  card: {
-    background: "white",
-    padding: "40px",
-    borderRadius: "16px",
-    boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
-    width: "320px"
-  },
-
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "12px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    fontSize: "14px"
-  },
-
-  button: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#4f46e5",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer"
-  }
-};
-
-export default Signup;

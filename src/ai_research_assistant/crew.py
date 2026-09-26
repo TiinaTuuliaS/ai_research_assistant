@@ -1,4 +1,6 @@
 from typing import Any
+from pathlib import Path
+import yaml
 
 from crewai import Agent, Crew, LLM, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
@@ -27,6 +29,17 @@ class AiResearchAssistant:
     @before_kickoff
     def prepare(self, inputs):
         self.search_tool.sources.clear()
+        inputs = dict(inputs or {})
+        inputs["goal"] = inputs.get("goal") or "Explore opportunities; explicitly label this assumed goal"
+        inputs["target_market"] = inputs.get("target_market") or "Not specified; state any market assumptions explicitly"
+        inputs["budget"] = inputs.get("budget") or "Not specified; do not assume a budget"
+        mode = inputs.get("research_type") or "market"
+        contracts = yaml.safe_load((Path(__file__).parent / "config/deliverables.yaml").read_text(encoding="utf-8"))
+        if mode not in contracts:
+            raise ValueError("Unknown research type")
+        inputs["research_type"] = mode
+        for name, contract in contracts[mode].items():
+            inputs[f"{name}_deliverable"] = contract
         return inputs
 
     @agent
@@ -93,7 +106,7 @@ class AiResearchAssistant:
         )
 
     def check_sources(self, output: TaskOutput) -> tuple[bool, Any]:
-        return validate_citations(output.raw, self.search_tool.sources)
+        return validate_citations(output.raw, self.search_tool.sources, require_evidence_notes=True)
 
     @task
     def report_task(self) -> Task:

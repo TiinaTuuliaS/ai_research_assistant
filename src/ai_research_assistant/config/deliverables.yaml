@@ -1,0 +1,81 @@
+demand:
+  research_task: >
+    Produce an evidence inventory, not an essay: customer problem, observed behavior,
+    current workaround or alternative, and direct evidence of payment if any.
+    For each finding give the source, actual publisher, population, date and limitation.
+    Separate customer evidence from vendor claims. Do not recommend a solution.
+  trend_task: >
+    Produce a change log for this customer need: earlier observation versus later
+    observation, supporting sources, and one counter-signal. If comparable dates are
+    unavailable, call it a snapshot, not growth. Explain what changed beyond the
+    researcher's inventory; do not repeat the market overview.
+  analysis_task: >
+    Audit demand claims: list each important claim, supporting evidence, alternative
+    explanation, and verdict (supported, indirect, unsupported). Distinguish interest,
+    problem frequency and willingness to pay. Reject inferences from competitor
+    existence or general AI adoption to demand. End with the decisive evidence gap.
+  strategy_task: >
+    Produce a decision brief: which specific customer/problem combination to pursue,
+    narrow or defer, the reason from the audit, one bounded offer or prototype and
+    the assumption that could invalidate it. Label the offer a hypothesis unless
+    directly supported. Give at most two next steps, not an interview protocol.
+  report_task: >
+    Answer whether this idea has evidence of demand for the specified audience.
+    Separate demonstrated need, payment evidence, and untested assumptions. Include
+    the analyst's strongest objection and the strategist's conditional decision.
+    Do not transform uncertainty into an optimistic launch recommendation.
+
+competition:
+  research_task: >
+    Produce comparable competitor profiles: named alternative, target buyer, customer
+    problem, concrete offering, verified price if available and source. Include
+    manual or do-nothing alternatives when relevant. Unknown prices stay unknown.
+    Do not rank competitors or invent advantages for the user's solution.
+  trend_task: >
+    Produce a competitive-change log: documented changes in offerings, distribution,
+    pricing or buyer expectations, with dates and sources and a counter-signal.
+    Distinguish announcements from adoption. If no temporal evidence exists, say
+    which proposed changes are unverified; do not repeat competitor profiles.
+  analysis_task: >
+    Produce a differentiation audit: proposed differentiator, which competitor already
+    offers it, evidence of buyer relevance, and verdict (table stakes, plausible gap,
+    unsupported). Challenge the user's assumed uniqueness and compare like-for-like.
+    Explain why a missing feature may reflect lack of demand rather than opportunity.
+  strategy_task: >
+    Produce at most two positioning options. For each name the buyer, costly problem,
+    specific deliverable, named alternative and tradeoff. Recommend one conditionally
+    using the audit, or explain why none is defensible. Avoid generic claims such as
+    innovative, agile or AI-powered without specifying a buyer benefit and evidence.
+  report_task: >
+    Answer how the user's solution could credibly differ from named alternatives.
+    Summarize the decisive comparison, proposed positioning, tradeoff and missing
+    validation. Clearly distinguish observed competitor facts from suggested positioning.
+
+market:
+  research_task: >
+    Produce a market map: actors, buyer groups, what is bought, and available local
+    indicators relevant to the user's question. Attach source, actual publisher,
+    geographic coverage and date to each finding. Distinguish employment, freelance
+    contracts and vendor marketing. No career advice or unsupported growth forecasts.
+  trend_task: >
+    Produce a dated change log: what changed, compared with when, the mechanism and
+    one conflicting signal. Distinguish tool adoption, productivity, hiring and buying
+    demand; one does not prove the others. Mark international evidence as indirect
+    for a local market. Do not retell the market map.
+  analysis_task: >
+    Produce a critical implications brief: strongest supported development, weakest
+    popular claim, competing explanation and who benefits or loses under each.
+    Audit claims about jobs, income and demand against their actual sources.
+    Reject unsupported publisher attribution and population changes. Focus on the
+    user's market question, not automatically on validating a new product.
+  strategy_task: >
+    Produce concrete decision options relevant to the user's question. For a freelance
+    career question, specify at most two services: buyer, problem, bounded deliverable,
+    required capability, evidence-based rationale and risk. For other questions use
+    equally concrete actions suitable to that decision. Label proposals as hypotheses.
+    Do not merely recommend specializing in AI or doing more market research.
+  report_task: >
+    Answer what is happening in this market and what it means for the user's actual
+    decision. Separate observed changes from scenarios. Include the critical audit,
+    concrete options and conditions under which the recommendation would change.
+    Do not repeat five generic market introductions or assume the user is launching a product.

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, JSON
 from .database import Base
 
 class Research(Base):
@@ -23,3 +23,15 @@ class LoginSession(Base):
     token_hash = Column(String(64), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     expires_at = Column(Integer, nullable=False, index=True)
+
+
+class ResearchJob(Base):
+    __tablename__ = "research_jobs"
+
+    id = Column(String(32), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    research_id = Column(Integer, ForeignKey("researches.id"), unique=True)
+    topic = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="queued")
+    steps = Column(JSON, nullable=False)
+    error = Column(Text)

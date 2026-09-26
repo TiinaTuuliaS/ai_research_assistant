@@ -1,15 +1,40 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Dashboard from "./components/Dashboard";
 import History from "./components/History";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
-import { useEffect, useState } from "react";
 import { api, clearLegacyStorage } from "./api";
+import { clearDraft, emptyDraft, readDraft, saveDraft } from "./researchDraft";
+import "./App.css";
 
-function App() {
+function AuthPage({ user, checking, setUser, signup = false }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const destination = location.state?.returnTo === "/history" ? "/history" : "/";
+  if (user) return <Navigate to={destination} replace />;
+  return <main className="auth-page">
+    <Link to="/">← Takaisin etusivulle</Link>
+    <p>Tutkimuksesi tiedot säilyvät kirjautumisen ajan tässä välilehdessä.</p>
+    {location.state?.notice && <p role="status">{location.state.notice}</p>}
+    {checking ? <p role="status">Tarkistetaan kirjautumista…</p> : signup
+      ? <Signup onCreated={() => navigate("/login", { replace: true, state: { returnTo: destination, notice: "Tili luotu. Kirjaudu jatkaaksesi." } })} />
+      : <Login setUser={setUser} />}
+    <p>{signup ? "Onko sinulla jo tili? " : "Ensimmäistä kertaa täällä? "}
+      <Link to={signup ? "/login" : "/signup"} state={{ returnTo: destination }}>
+        {signup ? "Kirjaudu sisään" : "Luo tili"}
+      </Link>
+    </p>
+  </main>;
+}
+
+export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
+  const [draft, setDraft] = useState(readDraft);
+
+  const updateDraft = value => { setDraft(value); saveDraft(value); };
 
   useEffect(() => {
     clearLegacyStorage();
@@ -19,99 +44,46 @@ function App() {
     api("/me", { signal: controller.signal })
       .then(value => { if (!controller.signal.aborted) setUser(value); })
       .catch(error => {
-        if (error.name !== "AbortError" && error.status !== 401) {
-          setError("Palvelimeen ei saatu yhteyttä. Päivitä sivu yrittääksesi uudelleen.");
+        if (!controller.signal.aborted && error.status !== 401) {
+          setError("Palvelimeen ei saatu yhteyttä. Voit tutustua esimerkkiin ja valmistella tutkimuksen.");
         }
       })
       .finally(() => { if (!controller.signal.aborted) setChecking(false); });
-    return () => {
-      controller.abort();
-      window.removeEventListener("session-expired", expired);
-    };
+    return () => { controller.abort(); window.removeEventListener("session-expired", expired); };
   }, []);
 
   const logout = async () => {
     try {
       await api("/logout", { method: "POST" });
       clearLegacyStorage();
+      clearDraft();
+      setDraft({ ...emptyDraft });
       setUser(null);
       setError("");
-    } catch {
-      setError("Uloskirjautuminen epäonnistui. Yritä uudelleen.");
-    }
+    } catch { setError("Uloskirjautuminen epäonnistui. Yritä uudelleen."); }
   };
 
-  if (checking) return <p>Tarkistetaan kirjautumista…</p>;
-
-  // 🔥 JOS EI USER → NÄYTÄ LOGIN
-  if (!user) {
-    return (
-      <div style={{ padding: "30px" }}>
-        <h2>Kirjaudu sisään</h2>
-        {error && <p role="alert">{error}</p>}
-        <Login setUser={value => { setError(""); setUser(value); }} />
-        <Signup />
-      </div>
-    );
-  }
-
-  return (
-    <BrowserRouter>
-      <div style={styles.navbar}>
-
-        <div style={styles.left}>
-          <Link style={styles.link} to="/">🔎 Tutkimus</Link>
-          <Link style={styles.link} to="/history">📜 Historia</Link>
-        </div>
-
-        <button
-          style={styles.logout}
-          onClick={logout}
-        >
-          🚪 Logout
-        </button>
-
-      </div>
-
-      {error && <p role="alert">{error}</p>}
-
-      <Routes>
-        <Route path="/" element={<Dashboard key={user.user_id} user={user} />} />
-        <Route path="/history" element={<History key={user.user_id} user={user} />} />
-      </Routes>
-    </BrowserRouter>
-  );
+  return <BrowserRouter>
+    <header className="site-header">
+      <Link className="brand" to="/">🔎 Tutkimus</Link>
+      <nav aria-label="Päänavigaatio">
+        <Link to="/">Etusivu</Link>
+        {user ? <>
+          <Link to="/history">Omat raportit</Link>
+          <button className="button subtle" onClick={logout}>Kirjaudu ulos</button>
+        </> : <Link className="button subtle" to="/login">Kirjaudu sisään</Link>}
+      </nav>
+    </header>
+    {error && <p className="notice" role="alert">{error}</p>}
+    <Routes>
+      <Route path="/" element={<Dashboard key={user?.user_id || "public"} user={user} checking={checking} draft={draft} setDraft={updateDraft} />} />
+      <Route path="/login" element={<AuthPage user={user} checking={checking} setUser={value => { setError(""); setUser(value); }} />} />
+      <Route path="/signup" element={<AuthPage signup user={user} checking={checking} setUser={setUser} />} />
+      <Route path="/history" element={checking ? <p className="notice">Tarkistetaan kirjautumista…</p>
+        : user ? <History key={user.user_id} user={user} />
+        : <Navigate to="/login" replace state={{ returnTo: "/history" }} />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+    <footer className="site-footer">Eri näkökulmia, perusteltuja päätelmiä ja tietoa päätöksen tueksi.</footer>
+  </BrowserRouter>;
 }
-
-const styles = {
-  navbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "15px 25px",
-    background: "#fff",
-    borderBottom: "1px solid #eee"
-  },
-
-  left: {
-    display: "flex",
-    gap: "20px"
-  },
-
-  link: {
-    textDecoration: "none",
-    color: "#111",
-    fontWeight: "500"
-  },
-
-  logout: {
-    border: "none",
-    background: "#ef4444",
-    color: "white",
-    padding: "8px 14px",
-    borderRadius: "8px",
-    cursor: "pointer"
-  }
-};
-
-export default App;

@@ -29,3 +29,13 @@ test("handles logout with an empty response", async () => {
   await expect(api("/logout", { method: "POST" })).resolves.toBeNull();
   clearLegacyStorage();
 });
+
+test("explains an outdated backend instead of blaming field lengths", async () => {
+  fetch.mockResolvedValue({ ok: false, status: 422, json: async () => ({ detail: [{ type: "extra_forbidden", loc: ["body", "research_type"] }] }) });
+  await expect(api("/research-jobs")).rejects.toThrow("Käynnistä backend uudelleen");
+});
+
+test("identifies the field and actual length limit", async () => {
+  fetch.mockResolvedValue({ ok: false, status: 422, json: async () => ({ detail: [{ type: "string_too_long", loc: ["body", "goal"], ctx: { max_length: 1000 } }] }) });
+  await expect(api("/research-jobs")).rejects.toThrow("Tutkimuskysymys: enintään 1000 merkkiä.");
+});

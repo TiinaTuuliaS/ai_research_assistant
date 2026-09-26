@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
+import ResearchReport from "./ResearchReport";
+import ReportActions from "./ReportActions";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
 
@@ -52,7 +53,8 @@ function History({ user }) {
       {selected && (
         <div style={styles.selectedCard}>
           <h2>📄 {selected.topic}</h2>
-          <ReactMarkdown>{selected.result}</ReactMarkdown>
+          <ReportActions key={selected.id} topic={selected.topic} result={selected.result} steps={selected.steps} />
+          <ResearchReport result={selected.result} steps={selected.steps} />
         </div>
       )}
 
@@ -65,7 +67,7 @@ function History({ user }) {
           onClick={() => setSelected(r)}
           >
           <h3>{r.topic}</h3>
-          <p style={{ color: "#4f46e5" }}>
+          <p style={{ color: "var(--accent)" }}>
             Klikkaa avataksesi →
           </p>
         </motion.div>
@@ -82,11 +84,11 @@ const styles = {
   },
 
   selectedCard: {
-    background: "#eef2ff",
+    background: "#f2ecfb",
     padding: "20px",
     borderRadius: "12px",
     marginBottom: "20px",
-    border: "2px solid #4f46e5"
+    border: "2px solid var(--lavender)"
   },
 
   card: {

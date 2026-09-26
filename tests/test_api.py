@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src import api
-from src.models import Base, LoginSession, Research, User
+from src.models import Base, LoginSession, Research, ResearchJob, User
 from src.security import is_password_hash, token_hash, verify_password
 
 
@@ -126,6 +126,35 @@ class AuthenticationTests(unittest.TestCase):
         self.assertNotIn("invalid citations", response.text)
         self.assertEqual(self.client.get("/researches").json(), [])
 
+    def test_research_brief_reaches_generator_and_rejects_invalid_budget(self):
+        self.register_login()
+        brief = {"topic": "Service", "goal": "Test demand", "target_market": "Finland", "budget_eur": 0}
+        with patch.object(api, "generate_report", return_value="Practical plan") as generate:
+            response = self.client.post("/research", json=brief)
+            self.assertEqual(response.status_code, 200)
+            generate.assert_called_once_with("Service", "suomi", "Test demand", "Finland", 0)
+        with patch.object(api, "generate_report") as generate:
+            for invalid in (-1, 10_000_001, "not-a-number"):
+                self.assertEqual(self.client.post("/research", json={**brief, "budget_eur": invalid}).status_code, 422)
+            self.assertEqual(self.client.post("/research", json={**brief, "goal": "x" * 1001}).status_code, 422)
+            generate.assert_not_called()
+
+    def test_omitted_budget_remains_unknown(self):
+        self.register_login()
+        with patch.object(api, "generate_report", return_value="Plan") as generate:
+            self.client.post("/research", json={"topic": "Service"})
+            generate.assert_called_once_with("Service", "suomi", "", "", None)
+
+    def test_research_modes_change_agent_brief(self):
+        self.register_login()
+        for mode, expected in [("demand", "Assess demand"), ("competition", "Compare competitors"), ("market", "Map this industry")]:
+            with patch.object(api, "generate_report", return_value="Report") as generate:
+                response = self.client.post("/research", json={"topic": "Service", "research_type": mode, "problem": "Customer pain", "competitors": "Company A", "goal": "Recent changes"})
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(expected, generate.call_args.args[2])
+                self.assertEqual(generate.call_args.kwargs["research_type"], mode)
+        self.assertEqual(self.client.post("/research", json={"topic": "Service", "research_type": "unknown"}).status_code, 422)
+
     def test_logout_during_research_prevents_save(self):
         self.register_login()
 
@@ -139,6 +168,68 @@ class AuthenticationTests(unittest.TestCase):
             self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 401)
         with self.sessions() as db:
             self.assertEqual(db.query(Research).count(), 0)
+
+    def test_job_progress_history_and_ownership(self):
+        self.register_login()
+        def generate(*args, progress):
+            for i in range(5):
+                progress(i, "running", None)
+                with self.sessions() as db:
+                    job = db.query(ResearchJob).one()
+                    self.assertEqual(job.steps[i]["status"], "running")
+                progress(i, "completed", f"Perspective {i}")
+                progress(i, "running", None)  # Delayed events cannot erase output.
+            return "Final report\n\n## Lähteet\nSources"
+        with patch.object(api, "generate_report", side_effect=generate):
+            response = self.client.post("/research-jobs", json={"topic": "Market"})
+        self.assertEqual(response.status_code, 202)
+        path = f'/research-jobs/{response.json()["id"]}'
+        job = self.client.get(path).json()
+        self.assertEqual(job["status"], "completed")
+        self.assertEqual(job["steps"][0]["output"], "Perspective 0")
+        self.assertEqual(self.client.get("/researches").json()[0]["steps"], job["steps"])
+        self.client.post("/logout")
+        self.assertEqual(self.client.get(path).status_code, 401)
+        self.register_login("bob@example.test")
+        self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_failed_job_keeps_progress_but_does_not_save_report(self):
+        self.register_login()
+        def fail(*args, progress):
+            progress(0, "completed", "Actual finding")
+            progress(1, "running", None)
+            raise ValueError("secret provider detail")
+        with patch.object(api, "generate_report", side_effect=fail):
+            response = self.client.post("/research-jobs", json={"topic": "Market"})
+        job = self.client.get(f'/research-jobs/{response.json()["id"]}').json()
+        self.assertEqual(job["status"], "failed")
+        self.assertEqual(job["steps"][0]["status"], "completed")
+        self.assertEqual(job["steps"][1]["status"], "failed")
+        self.assertNotIn("secret", job["error"])
+        self.assertEqual(self.client.get("/researches").json(), [])
+
+    def test_existing_job_is_reused_without_new_generation(self):
+        owner = self.register_login().json()["user_id"]
+        with self.sessions() as db:
+            db.add(ResearchJob(id="existing", user_id=owner, topic="Old", status="running", steps=api.new_steps()))
+            db.commit()
+        with patch.object(api, "generate_report") as generate:
+            response = self.client.post("/research-jobs", json={"topic": "Another"})
+            self.assertEqual(response.json()["id"], "existing")
+            generate.assert_not_called()
+
+    def test_revoked_job_cannot_save(self):
+        self.register_login()
+        def revoke(*args, **kwargs):
+            with self.sessions() as db:
+                db.query(LoginSession).delete()
+                db.commit()
+            return "Not saved"
+        with patch.object(api, "generate_report", side_effect=revoke):
+            self.client.post("/research-jobs", json={"topic": "Market"})
+        with self.sessions() as db:
+            self.assertEqual(db.query(Research).count(), 0)
+            self.assertEqual(db.query(ResearchJob).one().status, "failed")
 
 
 if __name__ == "__main__":
