@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 from .database import SessionLocal, engine, get_db
 from .models import Base, LoginSession, Research, ResearchJob, User
 from .security import hash_password, is_password_hash, token_hash, verify_password
-from . import plans
-from .models import BusinessPlan
 
 COOKIE_NAME = "research_session"
 SESSION_SECONDS = 12 * 60 * 60
@@ -345,25 +343,3 @@ def legacy_researches(user_id: int, user: User = Depends(current_user),
     if user_id != user.id:
         raise HTTPException(403, "Ei käyttöoikeutta.")
     return get_researches(user, db)
-
-
-@app.get("/plans")
-def list_plans(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return [plans.serialize(plan) for plan in db.query(BusinessPlan).filter_by(user_id=user.id)
-            .order_by(BusinessPlan.updated_at.desc()).all()]
-
-
-@app.post("/plans", status_code=201)
-def create_plan(data: plans.CreatePlan, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return plans.create(db, user.id, data.title)
-
-
-@app.get("/plans/{plan_id}")
-def get_plan(plan_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return plans.detail(db, plans.owned_plan(db, user.id, plan_id))
-
-
-@app.post("/plans/{plan_id}/sections/{section}")
-def edit_plan(plan_id: int, section: str, data: plans.EditSection,
-              user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return plans.edit(db, user.id, plan_id, section, data)

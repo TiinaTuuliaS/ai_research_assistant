@@ -51,20 +51,6 @@ käyttöliittymälle ja API:lle samaa sivustoa (SameSite=strict).
 
 ## Kirjautuminen ja tiedot
 
-### Omat liiketoimintasuunnitelmat (ensimmäinen vaihe)
-
-`/plans`-sivulla käyttäjä luo nimetyn suunnitelman, muokkaa kuutta osiota ja tallentaa
-luonnoksia tai hyväksyy osiot erikseen. Näkymä näyttää hyväksyttyjen osioiden määrän,
-rakentuvan kokonaisuuden ja viimeiset 50 tallennettua versiota sisältöineen.
-Aiemman osion sisällön muuttaminen merkitsee myöhemmät hyväksytyt osiot tarkistettaviksi.
-Tekstit säilyvät. Valmius tarkoittaa käyttäjän hyväksyntöjä, ei liikeidean validointia.
-
-Suunnitelmat ja muuttumattomat versiot tallentuvat `business_plans`- ja
-`plan_revisions`-tauluihin. Taulut luodaan backendin käynnistyessä. Kaikki reitit
-vaativat omistajan istunnon. Versiotarkistus estää vanhan välilehden ylikirjoituksen.
-Ensimmäinen vaihe ei kutsu agentteja, liitä tutkimuksia automaattisesti tai laske
-talousennusteita. Tutkimusapu ja laskuri voidaan liittää myöhemmin osioihin.
-
 Etusivu ja havainnollistava esimerkkiraportti ovat julkisia. Tutkimuksen tekeminen
 ja omien raporttien katselu vaativat kirjautumisen. Tutkimuslomakkeessa annetaan aihe,
 päätöksen tavoite, kohdemarkkina/asiakkaat ja valinnainen kokeilubudjetti euroina.
