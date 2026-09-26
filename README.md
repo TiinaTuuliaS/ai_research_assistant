@@ -6,15 +6,40 @@ muodostavat strategian ja kirjoittavat lähteistetyn raportin.
 
 ## Käynnistys
 
+Suorita komennot projektin juuresta (`ai_research_assistant`).
+
+**Frontti ja backend samalla komennolla:**
+
+```powershell
+npm run dev
+```
+
+**Tai erikseen kahdessa terminaalissa:**
+
+```powershell
+npm run front
+```
+
+```powershell
+npm run backend
+```
+
+Sovellus: http://localhost:3000 · API: http://127.0.0.1:8000/docs.
+Pysäytä Ctrl+C:llä. `npm run dev` pysäyttää molemmat palvelut yhdessä.
+Jos portti on jo käytössä, pysäytä aiempi palvelin ensin; komento ei sulje sitä puolestasi.
+Backendin koodimuutosten jälkeen pysäytä ja käynnistä se uudelleen. Automaattinen
+uudelleenkäynnistys on pois käytöstä, jotta tiedoston tallennus ei keskeytä AI-tutkimusta.
+Juuren käynnistyskomennot eivät tarvitse erillistä `npm install` -asennusta.
+
+### Ensimmäinen käyttökerta
+
 Python >=3.10,<3.14 ja Node >=20. Python-paketit hallitaan uv:lla.
 
 1. `uv sync`
 2. Kopioi `.env.example` tiedostoksi `.env`, jos omaa `.env`-tiedostoa ei vielä ole.
    Aseta `OPENAI_API_KEY` ja `SERPER_API_KEY`. Älä tallenna avaimia Gitiin.
-3. Käynnistä projektin juuresta backend:
-   `uv run uvicorn src.api:app --host 127.0.0.1 --port 8000`
-4. Avaa toinen pääte hakemistoon `ai-research-frontend`, suorita `npm install`
-   ja `npm start`.
+3. Asenna frontendin paketit projektin juuresta: `npm --prefix ai-research-frontend install`.
+4. Käynnistä molemmat palvelut: `npm run dev`.
 5. Avaa http://127.0.0.1:3000 tai http://localhost:3000.
 
 Käyttöliittymä käyttää oletuksena selaimen omaa hostnamea ja porttia 8000,
@@ -25,6 +50,20 @@ käyttöliittymäosoitteiden lista. HTTPS-käytössä aseta `COOKIE_SECURE=true`
 käyttöliittymälle ja API:lle samaa sivustoa (SameSite=strict).
 
 ## Kirjautuminen ja tiedot
+
+### Omat liiketoimintasuunnitelmat (ensimmäinen vaihe)
+
+`/plans`-sivulla käyttäjä luo nimetyn suunnitelman, muokkaa kuutta osiota ja tallentaa
+luonnoksia tai hyväksyy osiot erikseen. Näkymä näyttää hyväksyttyjen osioiden määrän,
+rakentuvan kokonaisuuden ja viimeiset 50 tallennettua versiota sisältöineen.
+Aiemman osion sisällön muuttaminen merkitsee myöhemmät hyväksytyt osiot tarkistettaviksi.
+Tekstit säilyvät. Valmius tarkoittaa käyttäjän hyväksyntöjä, ei liikeidean validointia.
+
+Suunnitelmat ja muuttumattomat versiot tallentuvat `business_plans`- ja
+`plan_revisions`-tauluihin. Taulut luodaan backendin käynnistyessä. Kaikki reitit
+vaativat omistajan istunnon. Versiotarkistus estää vanhan välilehden ylikirjoituksen.
+Ensimmäinen vaihe ei kutsu agentteja, liitä tutkimuksia automaattisesti tai laske
+talousennusteita. Tutkimusapu ja laskuri voidaan liittää myöhemmin osioihin.
 
 Etusivu ja havainnollistava esimerkkiraportti ovat julkisia. Tutkimuksen tekeminen
 ja omien raporttien katselu vaativat kirjautumisen. Tutkimuslomakkeessa annetaan aihe,

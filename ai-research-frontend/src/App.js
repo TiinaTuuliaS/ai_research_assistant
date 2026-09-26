@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate, useLocation 
 import { useEffect, useState } from "react";
 import Dashboard from "./components/Dashboard";
 import History from "./components/History";
+import Plans from "./components/Plans";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import { api, clearLegacyStorage } from "./api";
@@ -11,7 +12,7 @@ import "./App.css";
 function AuthPage({ user, checking, setUser, signup = false }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const destination = location.state?.returnTo === "/history" ? "/history" : "/";
+  const destination = ["/history", "/plans"].includes(location.state?.returnTo) ? location.state.returnTo : "/";
   if (user) return <Navigate to={destination} replace />;
   return <main className="auth-page">
     <Link to="/">← Takaisin etusivulle</Link>
@@ -69,6 +70,7 @@ export default function App() {
       <nav aria-label="Päänavigaatio">
         <Link to="/">Etusivu</Link>
         {user ? <>
+          <Link to="/plans">Omat suunnitelmat</Link>
           <Link to="/history">Omat raportit</Link>
           <button className="button subtle" onClick={logout}>Kirjaudu ulos</button>
         </> : <Link className="button subtle" to="/login">Kirjaudu sisään</Link>}
@@ -82,6 +84,9 @@ export default function App() {
       <Route path="/history" element={checking ? <p className="notice">Tarkistetaan kirjautumista…</p>
         : user ? <History key={user.user_id} user={user} />
         : <Navigate to="/login" replace state={{ returnTo: "/history" }} />} />
+      <Route path="/plans" element={checking ? <p className="notice">Tarkistetaan kirjautumista…</p>
+        : user ? <Plans key={user.user_id} user={user} />
+        : <Navigate to="/login" replace state={{ returnTo: "/plans" }} />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     <footer className="site-footer">Eri näkökulmia, perusteltuja päätelmiä ja tietoa päätöksen tueksi.</footer>

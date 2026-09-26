@@ -111,6 +111,18 @@ summary span span:last-child { font-size: 13px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 
 .agent-progress { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 20px; }
+.plans-page { max-width: 800px; margin: 32px auto; padding: 0 20px; line-height: 1.6; }
+.plan-create, .plan-workspace { padding: 24px; margin: 24px 0; }
+.plan-create input, .plan-workspace textarea { display: block; width: 100%; box-sizing: border-box; margin: 10px 0 16px; padding: 12px; border: 1px solid var(--lavender); border-radius: 8px; font: inherit; }
+.plan-list, .plan-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+.plan-card, .plan-sections button { text-align: left; padding: 16px; background: white; border: 2px solid var(--line); border-radius: 10px; color: var(--accent); font: inherit; cursor: pointer; }
+.plan-card span, .plan-card small, .plan-sections span { display: block; margin-top: 6px; }
+.plan-card.selected, .plan-sections button[aria-pressed="true"] { border-color: var(--accent); background: #f2ecfb; }
+.plan-workspace progress { width: 100%; accent-color: var(--accent); }
+.plan-workspace summary { display: list-item; cursor: pointer; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.plan-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.plan-workspace h3 small { font-size: 13px; font-weight: normal; }
+@media (max-width: 520px) { .plan-list, .plan-sections { grid-template-columns: 1fr; } .plan-create, .plan-workspace { padding: 18px; } }
 .research-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 24px 0; }
 .research-type { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 18px; text-align: left; background: white; color: var(--accent); border: 2px solid #ded3f0; border-radius: 12px; cursor: pointer; font: inherit; }
 .research-type.selected { border-color: #3E0F8D; background: #f2ecfb; }

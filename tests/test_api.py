@@ -145,6 +145,39 @@ class AuthenticationTests(unittest.TestCase):
             self.client.post("/research", json={"topic": "Service"})
             generate.assert_called_once_with("Service", "suomi", "", "", None)
 
+    def test_plan_revisions_approval_and_dependency_review(self):
+        self.register_login()
+        plan = self.client.post("/plans", json={"title": "Oma yritys"}).json()
+        path = f'/plans/{plan["id"]}'
+        self.assertEqual(len(plan["sections"]), 6)
+        self.assertEqual(self.client.post(path + "/sections/customer", json={"content": " ", "version": 1, "action": "approve"}).status_code, 422)
+        for key, content in [("customer", "Pienyritykset"), ("offering", "Verkkosivut")]:
+            response = self.client.post(path + f"/sections/{key}", json={"content": content, "version": plan["version"], "action": "approve"})
+            self.assertEqual(response.status_code, 200)
+            plan = response.json()
+        previous = plan["version"]
+        plan = self.client.post(path + "/sections/customer", json={"content": "Yhdistykset", "version": previous, "action": "save"}).json()
+        self.assertEqual(plan["sections"]["customer"]["status"], "draft")
+        self.assertEqual(plan["sections"]["offering"]["status"], "review")
+        self.assertEqual(plan["sections"]["offering"]["content"], "Verkkosivut")
+        self.assertEqual(plan["revisions"][1]["sections"]["customer"]["content"], "Pienyritykset")
+        self.assertEqual(self.client.post(path + "/sections/customer", json={"content": "Stale overwrite", "version": previous}).status_code, 409)
+        self.assertEqual(self.client.get(path).json()["sections"]["customer"]["content"], "Yhdistykset")
+        self.assertEqual(self.client.get("/plans").json()[0]["version"], plan["version"])
+
+    def test_plans_are_private_and_validate_input(self):
+        self.assertEqual(self.client.get("/plans").status_code, 401)
+        self.assertEqual(self.client.post("/plans", json={"title": "Private"}).status_code, 401)
+        self.register_login()
+        self.assertEqual(self.client.post("/plans", json={"title": " "}).status_code, 422)
+        self.assertEqual(self.client.post("/plans", json={"title": "x", "user_id": 5}).status_code, 422)
+        plan = self.client.post("/plans", json={"title": "Private"}).json()
+        self.client.post("/logout")
+        self.register_login("bob@example.test")
+        self.assertEqual(self.client.get("/plans").json(), [])
+        self.assertEqual(self.client.get(f'/plans/{plan["id"]}').status_code, 404)
+        self.assertEqual(self.client.post(f'/plans/{plan["id"]}/sections/customer', json={"content": "Attack", "version": 1}).status_code, 404)
+
     def test_research_modes_change_agent_brief(self):
         self.register_login()
         for mode, expected in [("demand", "Assess demand"), ("competition", "Compare competitors"), ("market", "Map this industry")]:

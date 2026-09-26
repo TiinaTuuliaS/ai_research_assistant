@@ -1,0 +1,9 @@
+{
+  "name": "ai-research-assistant-dev",
+  "private": true,
+  "scripts": {
+    "front": "npm --prefix ai-research-frontend start",
+    "backend": "uv run --no-sync python -X utf8 -m uvicorn src.api:app --host 127.0.0.1 --port 8000",
+    "dev": "node scripts/dev.cjs"
+  }
+}

@@ -83,6 +83,7 @@ export default function Dashboard({ user, checking, draft, setDraft }) {
         <h1>🤖 AI Markkinatutkimusassistentti</h1>
         <p className="lead">Tutki markkinoita eri näkökulmista. Viisi tekoälyagenttia kokoaa havainnot, punnitsee niiden merkityksen ja tiivistää vastauksen kysymykseesi.</p>
         <a className="text-link" href="#esimerkki">Katso esimerkkiraportti ilman tunnusta ↗</a>
+        <p><Link className="button primary" to="/plans">Rakenna oma liiketoimintasuunnitelma →</Link></p>
         <div className="agent-badges" aria-label="Tutkimuksen vaiheet"><span>🔍 Tutkimus</span><span>📈 Trendit</span><span>📊 Analyysi</span><span>🧠 Strategia</span><span>✍️ Raportti</span></div>
       </div>
       <form id="tutkimus" className="panel research-form" onSubmit={runResearch}>

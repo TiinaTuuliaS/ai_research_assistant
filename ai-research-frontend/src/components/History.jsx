@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ResearchReport from "./ResearchReport";
 import ReportActions from "./ReportActions";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { api } from "../api";
 
 function History({ user }) {
@@ -45,6 +45,7 @@ function History({ user }) {
   return (
     <div style={styles.page}>
       <h1>📜 Aiemmat haut</h1>
+      <p><Link to="/plans">Omat liiketoimintasuunnitelmat →</Link></p>
       {loading && <p role="status">Ladataan historiaa…</p>}
       {error && <p role="alert">{error} <button onClick={() => setAttempt(n => n + 1)}>Yritä uudelleen</button></p>}
       {!loading && !error && researches.length === 0 && <p>Ei vielä tutkimuksia.</p>}
