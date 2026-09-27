@@ -13,6 +13,27 @@ const steps = [
 ];
 beforeEach(() => { jest.clearAllMocks(); sessionStorage.clear(); });
 
+test("exhausted quota prevents submission but keeps reports accessible", () => {
+  render(<MemoryRouter><Dashboard user={{ user_id: 1, quota: { limit: 3, used: 3, remaining: 0 } }}
+    draft={{}} setDraft={() => {}} /></MemoryRouter>);
+  expect(screen.getByText(/Tutkimuksia jäljellä: 0 \/ 3/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Tutkimukset käytetty" })).toBeDisabled();
+  expect(screen.getByRole("link", { name: "Avaa omat raportit →" })).toHaveAttribute("href", "/history");
+  fireEvent.submit(document.querySelector("form"));
+  expect(api).not.toHaveBeenCalled();
+});
+
+test("last accepted attempt updates quota while its progress remains visible", async () => {
+  const quota = { limit: 3, used: 3, remaining: 0 };
+  api.mockResolvedValue({ id: "last", status: "completed", topic: "Aihe", result: "Valmis", steps, quota });
+  render(<MemoryRouter><Dashboard user={{ user_id: 1, quota: { limit: 3, used: 2, remaining: 1 } }}
+    draft={{ topic: "Aihe" }} setDraft={() => {}} /></MemoryRouter>);
+  fireEvent.submit(document.querySelector("form"));
+  await screen.findByRole("button", { name: "Tutkimukset käytetty" });
+  expect(screen.getByText(/Tutkimuksia jäljellä: 0 \/ 3/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Tutkimukset käytetty" })).toBeDisabled();
+});
+
 test("progress reflects completed stages, never elapsed time", () => {
   const view = render(<AgentProgress job={{ status: "running", steps }} />);
   expect(screen.getByRole("progressbar")).toHaveAttribute("value", "50");

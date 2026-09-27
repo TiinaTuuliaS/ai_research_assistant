@@ -26,11 +26,12 @@ for stream in (sys.stdout, sys.stderr):
 logger = logging.getLogger(__name__)
 
 from .database import SessionLocal, engine, get_db
-from .models import Base, LoginSession, Research, ResearchJob, User
+from .models import Base, LoginSession, Research, ResearchJob, ResearchUsage, User
 from .security import hash_password, is_password_hash, token_hash, verify_password
 
 COOKIE_NAME = "research_session"
 SESSION_SECONDS = 12 * 60 * 60
+RESEARCH_LIMIT = 3
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv(
     "ALLOWED_ORIGINS", "http://127.0.0.1:3000,http://localhost:3000"
@@ -148,6 +149,38 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
+def research_quota(db: Session, user_id: int):
+    with job_lock:
+        usage = db.get(ResearchUsage, user_id)
+        if usage is None:
+            # Import existing attempts once, without counting a job's report twice.
+            jobs = db.query(ResearchJob).filter_by(user_id=user_id).count()
+            legacy = db.query(Research).filter(
+                Research.user_id == user_id,
+                ~db.query(ResearchJob).filter(ResearchJob.research_id == Research.id).exists(),
+            ).count()
+            usage = ResearchUsage(user_id=user_id, used=jobs + legacy)
+            db.add(usage)
+            db.commit()
+        db.refresh(usage)
+        return {"limit": RESEARCH_LIMIT, "used": usage.used,
+                "remaining": max(0, RESEARCH_LIMIT - usage.used)}
+
+
+def reserve_research(db: Session, user_id: int):
+    """Reserve before any paid call; the caller commits with the new job, if any."""
+    research_quota(db, user_id)
+    changed = db.query(ResearchUsage).filter(
+        ResearchUsage.user_id == user_id, ResearchUsage.used < RESEARCH_LIMIT,
+    ).update({ResearchUsage.used: ResearchUsage.used + 1}, synchronize_session=False)
+    if not changed:
+        db.rollback()
+        raise HTTPException(429, detail={
+            "message": "Olet käyttänyt tilisi kaikki kolme tutkimusta. Voit edelleen katsella ja tallentaa omia raporttejasi.",
+            "quota": research_quota(db, user_id),
+        })
+
+
 @app.get("/")
 def root():
     return {"message": "API toimii"}
@@ -184,12 +217,12 @@ def login(data: Credentials, request: Request, response: Response, db: Session =
     db.commit()
     response.set_cookie(COOKIE_NAME, token, max_age=SESSION_SECONDS,
                         httponly=True, secure=COOKIE_SECURE, samesite="strict", path="/")
-    return {"user_id": user.id, "email": user.email}
+    return {"user_id": user.id, "email": user.email, "quota": research_quota(db, user.id)}
 
 
 @app.get("/me")
-def me(user: User = Depends(current_user)):
-    return {"user_id": user.id, "email": user.email}
+def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    return {"user_id": user.id, "email": user.email, "quota": research_quota(db, user.id)}
 
 
 @app.post("/logout", status_code=204)
@@ -222,7 +255,8 @@ def job_payload(job, db):
     entry = db.get(Research, job.research_id) if job.research_id else None
     return {"id": job.id, "topic": job.topic, "status": job.status,
             "steps": job.steps, "error": job.error,
-            "result": entry.result if entry else "", "research_id": job.research_id}
+            "result": entry.result if entry else "", "research_id": job.research_id,
+            "quota": research_quota(db, job.user_id)}
 
 
 def update_progress(job_id, index, status, output):
@@ -292,6 +326,7 @@ def start_job(data: ResearchRequest, request: Request, background: BackgroundTas
             return job_payload(existing, db)
         if active.count() >= 2:
             raise HTTPException(429, "Palvelu tekee jo kahta tutkimusta. Kokeile hetken kuluttua.")
+        reserve_research(db, user.id)
         job = ResearchJob(id=secrets.token_hex(16), user_id=user.id, topic=data.topic,
                           status="queued", steps=new_steps())
         db.add(job)
@@ -313,8 +348,10 @@ def get_job(job_id: str, user: User = Depends(current_user), db: Session = Depen
 def research(data: ResearchRequest, request: Request,
              user: User = Depends(current_user), db: Session = Depends(get_db)):
     owner_id = user.id
-    # End the read transaction before the potentially long external call.
-    db.commit()
+    with job_lock:
+        reserve_research(db, owner_id)
+        # Persist the charge before the external call, including failed attempts.
+        db.commit()
     try:
         result = generate_report(data.topic, data.language, research_goal(data), data.target_market, data.budget_eur,
                                  **({"research_type": data.research_type} if data.research_type else {}))

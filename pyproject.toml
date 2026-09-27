@@ -1,33 +1,19 @@
 [project]
 name = "ai_research_assistant"
 version = "0.1.0"
-description = "ai_research_assistant using crewAI"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+description = "Market research assistant with a React frontend and CrewAI agents"
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "crewai[tools]==1.10.1",
     "fastapi==0.135.2",
-    "gradio==6.9.0",
     "python-dotenv==1.1.1",
-    "reportlab==4.4.10",
     "sqlalchemy==2.0.49",
     "uvicorn==0.42.0",
 ]
 
-[project.scripts]
-ai_research_assistant = "ai_research_assistant.main:run"
-run_crew = "ai_research_assistant.main:run"
-train = "ai_research_assistant.main:train"
-replay = "ai_research_assistant.main:replay"
-test = "ai_research_assistant.main:test"
-run_with_trigger = "ai_research_assistant.main:run_with_trigger"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.crewai]
-type = "crew"
 
 [dependency-groups]
 dev = [

@@ -8,7 +8,7 @@ import ExampleReport from "./ExampleReport";
 
 import { researchTypes, selectedType, researchPayload } from "../researchTypes";
 
-export default function Dashboard({ user, checking, draft, setDraft }) {
+export default function Dashboard({ user, setUser, checking, draft, setDraft }) {
   const navigate = useNavigate();
   const type = selectedType(draft);
   const [result, setResult] = useState("");
@@ -20,7 +20,14 @@ export default function Dashboard({ user, checking, draft, setDraft }) {
   const [jobId, setJobId] = useState(null);
   const [pollAttempt, setPollAttempt] = useState(0);
   const [connectionError, setConnectionError] = useState("");
+  const [quota, setQuota] = useState(user?.quota);
+  useEffect(() => { setQuota(user?.quota); }, [user]);
+  const quotaExhausted = !!user && quota?.remaining === 0;
   const userId = user?.user_id;
+  useEffect(() => {
+    if (quota && setUser) setUser(current => current?.user_id === userId && current.quota !== quota
+      ? { ...current, quota } : current);
+  }, [quota, userId, setUser]);
   const storageKey = `research-job-${userId}`;
   useEffect(() => () => request.current?.abort(), []);
   useEffect(() => {
@@ -39,6 +46,7 @@ export default function Dashboard({ user, checking, draft, setDraft }) {
         const data = await api(`/research-jobs/${jobId}`, { signal: controller.signal });
         if (controller.signal.aborted) return;
         setJob(data);
+        if (data.quota) setQuota(data.quota);
         if (data.status === "completed" || data.status === "failed") {
           sessionStorage.removeItem(storageKey); setJobId(null); setLoading(false);
           if (data.status === "completed") { setResult(data.result); setReportTopic(data.topic); }
@@ -59,7 +67,7 @@ export default function Dashboard({ user, checking, draft, setDraft }) {
 
   const runResearch = async event => {
     event.preventDefault();
-    if (loading || checking) return;
+    if (loading || checking || quotaExhausted) return;
     if (!user) { navigate("/login"); return; }
     const controller = new AbortController();
     request.current = controller;
@@ -70,10 +78,14 @@ export default function Dashboard({ user, checking, draft, setDraft }) {
         body: JSON.stringify(researchPayload(draft)),
       });
       if (!controller.signal.aborted) {
+        if (data.quota) setQuota(data.quota);
         sessionStorage.setItem(storageKey, data.id); setJob(data); setJobId(data.id);
       }
     } catch (error) {
-      if (!controller.signal.aborted) { setError(error.message || "Tutkimus epäonnistui. Yritä uudelleen."); setLoading(false); }
+      if (!controller.signal.aborted) {
+        if (error.quota) setQuota(error.quota);
+        setError(error.message || "Tutkimus epäonnistui. Yritä uudelleen."); setLoading(false);
+      }
     }
   };
 
@@ -115,8 +127,13 @@ export default function Dashboard({ user, checking, draft, setDraft }) {
           <input id="budget" type="number" min="0" max="10000000" step="0.01" placeholder="Esim. 150" aria-describedby="budget-help" {...field("budget_eur")} />
           <p id="budget-help" className="field-help">0 € tarkoittaa kokeilua ilman ostoja. Tyhjä kenttä jättää budjetin avoimeksi.</p>
           </details>
-          <button className="button primary full-width" disabled={loading || checking}>
-            {loading ? "Tutkimus käynnissä…" : checking ? "Tarkistetaan kirjautumista…" : user ? "Aloita tutkimus →" : "Kirjaudu ja jatka tutkimukseen →"}
+          <p className="field-help" aria-live="polite">
+            {user && quota ? `Tutkimuksia jäljellä: ${quota.remaining} / ${quota.limit}.` : "Jokaisella käyttäjätilillä voi tehdä yhteensä kolme tutkimusta."}
+            {" "}Aloitettu tutkimus kuluttaa yhden käyttökerran myös keskeytyessään.
+          </p>
+          {quotaExhausted && <p>Tilisi tutkimukset on käytetty. <Link to="/history">Avaa omat raportit →</Link></p>}
+          <button className="button primary full-width" disabled={loading || checking || quotaExhausted}>
+            {loading ? "Tutkimus käynnissä…" : checking ? "Tarkistetaan kirjautumista…" : quotaExhausted ? "Tutkimukset käytetty" : user ? "Aloita tutkimus →" : "Kirjaudu ja jatka tutkimukseen →"}
           </button>
         </fieldset>
         <p className="field-help">{user ? "Raportti tallentuu omiin raportteihisi." : "Sivuun ja esimerkkiin voi tutustua vapaasti. Oman tutkimuksen tekeminen vaatii tilin."}</p>

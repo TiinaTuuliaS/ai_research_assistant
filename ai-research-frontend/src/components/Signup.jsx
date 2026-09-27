@@ -18,7 +18,7 @@ export default function Signup({ onCreated }) {
   };
   return <form className="panel auth-card" onSubmit={signup}>
     <h1>Luo tili</h1>
-    <p>Tallenna tutkimuksesi ja palaa suunnitelmiin myöhemmin.</p>
+    <p>Tilillä voit aloittaa yhteensä kolme tutkimusta ja palata raportteihisi myöhemmin. Myös keskeytynyt tutkimus kuluttaa käyttökerran.</p>
     {error && <p role="alert" className="error">{error}</p>}
     <label htmlFor="signup-email">Sähköposti tai käyttäjätunnus</label>
     <input id="signup-email" autoComplete="username" required maxLength={254} value={email} onChange={e => setEmail(e.target.value)} />

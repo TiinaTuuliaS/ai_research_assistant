@@ -1,6 +1,7 @@
 import tempfile
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src import api
-from src.models import Base, LoginSession, Research, ResearchJob, User
+from src.models import Base, LoginSession, Research, ResearchJob, ResearchUsage, User
 from src.security import is_password_hash, token_hash, verify_password
 
 
@@ -230,6 +231,61 @@ class AuthenticationTests(unittest.TestCase):
         with self.sessions() as db:
             self.assertEqual(db.query(Research).count(), 0)
             self.assertEqual(db.query(ResearchJob).one().status, "failed")
+
+    def test_three_attempts_shared_by_both_routes_and_persist_after_login(self):
+        self.register_login()
+        with patch.object(api, "generate_report", return_value="Report") as generate:
+            for path in ("/research-jobs", "/research", "/research-jobs"):
+                self.assertIn(self.client.post(path, json={"topic": "Market"}).status_code, (200, 202))
+            for path in ("/research", "/research-jobs"):
+                response = self.client.post(path, json={"topic": "Fourth"})
+                self.assertEqual(response.status_code, 429)
+                self.assertEqual(response.json()["detail"]["quota"]["remaining"], 0)
+            self.assertEqual(generate.call_count, 3)
+        self.client.post("/logout")
+        response = self.client.post("/login", json={"email": "alice@example.test", "password": self.password})
+        self.assertEqual(response.json()["quota"], {"limit": 3, "used": 3, "remaining": 0})
+        self.assertEqual(len(self.client.get("/researches").json()), 3)
+        self.register_login("other@example.test")
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
+
+    def test_failed_attempts_count_but_invalid_requests_do_not(self):
+        self.register_login()
+        self.client.post("/research-jobs", json={"topic": ""})
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
+        with patch.object(api, "generate_report", side_effect=ValueError("failure")):
+            self.client.post("/research-jobs", json={"topic": "Market"})
+            self.client.post("/research", json={"topic": "Market"})
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 1)
+
+    def test_legacy_attempts_imported_once_without_double_counting(self):
+        owner = self.register_login().json()["user_id"]
+        with self.sessions() as db:
+            db.query(ResearchUsage).delete()
+            report = Research(topic="Old", result="Saved", user_id=owner)
+            db.add(report)
+            db.flush()
+            db.add(ResearchJob(id="old", user_id=owner, research_id=report.id,
+                               topic="Old", status="completed", steps=api.new_steps()))
+            db.add(Research(topic="Legacy", result="Saved", user_id=owner))
+            db.commit()
+        for _ in range(2):
+            self.assertEqual(self.client.get("/me").json()["quota"]["used"], 2)
+
+    def test_concurrent_reservations_cannot_exceed_limit(self):
+        owner = self.register_login().json()["user_id"]
+        def reserve(_):
+            with self.sessions() as db:
+                try:
+                    api.reserve_research(db, owner)
+                    db.commit()
+                    return True
+                except api.HTTPException as error:
+                    self.assertEqual(error.status_code, 429)
+                    return False
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            self.assertEqual(sum(pool.map(reserve, range(6))), 3)
+        self.assertEqual(self.client.get("/me").json()["quota"]["used"], 3)
 
 
 if __name__ == "__main__":

@@ -76,7 +76,7 @@ export default function App() {
     </header>
     {error && <p className="notice" role="alert">{error}</p>}
     <Routes>
-      <Route path="/" element={<Dashboard key={user?.user_id || "public"} user={user} checking={checking} draft={draft} setDraft={updateDraft} />} />
+      <Route path="/" element={<Dashboard key={user?.user_id || "public"} user={user} setUser={setUser} checking={checking} draft={draft} setDraft={updateDraft} />} />
       <Route path="/login" element={<AuthPage user={user} checking={checking} setUser={value => { setError(""); setUser(value); }} />} />
       <Route path="/signup" element={<AuthPage signup user={user} checking={checking} setUser={setUser} />} />
       <Route path="/history" element={checking ? <p className="notice">Tarkistetaan kirjautumista…</p>

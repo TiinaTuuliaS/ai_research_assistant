@@ -40,9 +40,10 @@ export async function api(path, options = {}) {
     }
     const message = Array.isArray(data?.detail)
       ? validationMessage(data.detail, path)
-      : data?.detail || "Pyyntö epäonnistui.";
+      : data?.detail?.message || data?.detail || "Pyyntö epäonnistui.";
     const error = new Error(message);
     error.status = response.status;
+    error.quota = data?.detail?.quota;
     throw error;
   }
   return data;

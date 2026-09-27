@@ -25,6 +25,13 @@ class LoginSession(Base):
     expires_at = Column(Integer, nullable=False, index=True)
 
 
+class ResearchUsage(Base):
+    __tablename__ = "research_usage"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    used = Column(Integer, nullable=False, default=0)
+
+
 class ResearchJob(Base):
     __tablename__ = "research_jobs"
 
