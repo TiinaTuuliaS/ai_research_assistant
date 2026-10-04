@@ -16,6 +16,9 @@ from src.security import is_password_hash, token_hash, verify_password
 
 class AuthenticationTests(unittest.TestCase):
     def setUp(self):
+        self.admin_patch = patch.object(api, "ADMIN_USER_IDS", set())
+        self.admin_patch.start()
+        self.addCleanup(self.admin_patch.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.engine = create_engine(
             f"sqlite:///{Path(self.temp.name) / 'test.db'}",
@@ -248,6 +251,19 @@ class AuthenticationTests(unittest.TestCase):
         self.assertEqual(len(self.client.get("/researches").json()), 3)
         self.register_login("other@example.test")
         self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
+
+    def test_admin_has_unlimited_attempts_but_no_access_to_other_reports(self):
+        owner = self.register_login().json()["user_id"]
+        with patch.object(api, "ADMIN_USER_IDS", {owner}), patch.object(api, "generate_report", return_value="Report") as generate:
+            for path in ("/research", "/research-jobs") * 2:
+                self.assertIn(self.client.post(path, json={"topic": "Market"}).status_code, (200, 202))
+            self.assertEqual(generate.call_count, 4)
+            self.assertEqual(self.client.get("/me").json()["quota"],
+                             {"limit": None, "used": 4, "remaining": None, "unlimited": True})
+            self.assertEqual(self.client.get(f"/researches/{owner + 1}").status_code, 403)
+        with patch.object(api, "generate_report") as generate:
+            self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 429)
+            generate.assert_not_called()
 
     def test_failed_attempts_count_but_invalid_requests_do_not(self):
         self.register_login()

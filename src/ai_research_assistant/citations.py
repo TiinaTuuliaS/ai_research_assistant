@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 LINK = re.compile(r"\[([^\]\n]+)\]\(<?(https?://[^\s<>]+?)>?\)")
-SOURCE_HEADING = re.compile(r"^##\s+(Lähteet|Sources)\s*$", re.MULTILINE)
+SOURCE_HEADING = re.compile(r"^#{1,6}\s+(Lähteet|Sources)\s*:?\s*$", re.MULTILINE)
 
 
 def validate_citations(raw: str, sources: dict[str, dict[str, str]], *, require_evidence_notes: bool = False) -> tuple[bool, Any]:

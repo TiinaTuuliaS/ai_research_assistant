@@ -1,81 +1,99 @@
 demand:
   research_task: >
-    Produce an evidence inventory, not an essay: customer problem, observed behavior,
-    current workaround or alternative, and direct evidence of payment if any.
-    For each finding give the source, actual publisher, population, date and limitation.
-    Separate customer evidence from vendor claims. Do not recommend a solution.
+    Selvitä, mitä käyttäjän kuvaamasta tarpeesta ja nykyisestä tarjonnasta tiedetään.
+    Käytä otsikoita "Mitä löytyi" ja "Mitä emme vielä tiedä".
+    Erota asiakkaiden toiminnasta kertovat havainnot yritysten omista lupauksista.
+    Valitse ideaan sopivat vertailukohteet: esimerkiksi palvelu, tuote, ravintola,
+    tapahtuma tai nykyinen toimintatapa. Älä oleta kyseessä olevan ohjelmisto.
+    Mainitse ostot tai toteutunut käyttö vain, jos lähde todella kertoo niistä.
   trend_task: >
-    Produce a change log for this customer need: earlier observation versus later
-    observation, supporting sources, and one counter-signal. If comparable dates are
-    unavailable, call it a snapshot, not growth. Explain what changed beyond the
-    researcher's inventory; do not repeat the market overview.
+    Selvitä, onko tähän tarpeeseen liittyvässä käyttäytymisessä tai tarjonnassa
+    havaittu muutoksia. Käytä otsikoita "Muutoksen merkit" ja "Mitä niistä voi päätellä".
+    Aikavertailu vaatii erilliset, ajoitetut havainnot samasta asiasta.
+    Jos niitä ei ole, kuvaa nykytilannetta ja sano, ettei kasvusta voi päätellä mitään.
+    Etsi myös ensimmäisiä havaintoja kyseenalaistavaa tietoa. Älä keksi vastasignaalia.
   analysis_task: >
-    Audit demand claims: list each important claim, supporting evidence, alternative
-    explanation, and verdict (supported, indirect, unsupported). Distinguish interest,
-    problem frequency and willingness to pay. Reject inferences from competitor
-    existence or general AI adoption to demand. End with the decisive evidence gap.
+    Arvioi aiempien vaiheiden tärkeimmät väitteet. Käytä otsikoita
+    "Mikä on perusteltua" ja "Mitä aineisto ei osoita".
+    Kerro jokaisesta olennaisesta päätelmästä, mikä havainto sitä tukee ja kuinka
+    pitkälle päätelmä ulottuu. Erota kiinnostus, toteutunut käyttö ja ostaminen.
+    Nimeä aiempien agenttien perusteettomat väitteet ja korjaa ne avoimesti.
+    Älä tulkitse kysyntätiedon puuttumista todisteeksi kysynnän puuttumisesta.
   strategy_task: >
-    Produce a decision brief: which specific customer/problem combination to pursue,
-    narrow or defer, the reason from the audit, one bounded offer or prototype and
-    the assumption that could invalidate it. Label the offer a hypothesis unless
-    directly supported. Give at most two next steps, not an interview protocol.
+    Kerro, mikä päätös on nykyisen tiedon perusteella mahdollinen ja mikä ei.
+    Käytä otsikoita "Mitä tämä tarkoittaa ideallesi" ja "Seuraava päätös".
+    Ehdota tarvittaessa yhtä ideaan sopivaa pientä kokeilua ja kerro, minkä
+    epävarmuuden se selvittäisi. Merkitse ehdotus omaksi suositukseksi.
+    Älä esitä käyttäjän alkuperäistä ideaa uutena löydöksenä, keksi yrityksen nimeä
+    tai kirjoita pitkää tutkimusohjetta. Älä pakota ideaa ongelma/prototyyppi-malliin.
   report_task: >
-    Answer whether this idea has evidence of demand for the specified audience.
-    Separate demonstrated need, payment evidence, and untested assumptions. Include
-    the analyst's strongest objection and the strategist's conditional decision.
-    Do not transform uncertainty into an optimistic launch recommendation.
-
+    Vastaa siihen, millaista näyttöä idean kysynnästä löytyi ja mitä jäi avoimeksi.
+    Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset havainnot",
+    "Näytön vahvuus ja puutteet", "Mitä kannattaa tehdä seuraavaksi" ja "Lähteet".
+    Erota todettu kysyntä, epäsuorat merkit ja omat ehdotukset. Kerro konkreettisesti,
+    mihin mahdollinen seuraava päätös perustuu. Älä lupaa menestystä tai suosittele
+    idean hylkäämistä vain siksi, ettei verkkohaku löytänyt kysyntätietoa.
 competition:
   research_task: >
-    Produce comparable competitor profiles: named alternative, target buyer, customer
-    problem, concrete offering, verified price if available and source. Include
-    manual or do-nothing alternatives when relevant. Unknown prices stay unknown.
-    Do not rank competitors or invent advantages for the user's solution.
+    Etsi käyttäjän ratkaisulle relevantit, nimetyt vaihtoehdot oikealta alueelta.
+    Käytä otsikoita "Vertailtavat vaihtoehdot" ja "Puuttuvat tiedot".
+    Vertaa samalla perusteella sitä, mitä asiakas saa, kenelle se sopii, missä se on
+    saatavilla ja mikä ilmoitettu hinta on, jos se löytyy. Valitse vertailuperusteet
+    toimialan mukaan: älä vertaa esimerkiksi ravintoloita ohjelmiston ominaisuuksilla.
+    Suosi toimijoiden omia tuote-, palvelu-, hinnasto- tai ruokalistasivuja.
+    Tuntematon hinta tai tarjonta jää tuntemattomaksi. Älä keksi kilpailijoita.
   trend_task: >
-    Produce a competitive-change log: documented changes in offerings, distribution,
-    pricing or buyer expectations, with dates and sources and a counter-signal.
-    Distinguish announcements from adoption. If no temporal evidence exists, say
-    which proposed changes are unverified; do not repeat competitor profiles.
+    Selvitä dokumentoidut muutokset kilpailijoiden tarjonnassa, hinnoissa tai
+    asiakkaiden valintaperusteissa. Käytä otsikoita "Mikä kilpailussa muuttuu" ja
+    "Muutoksen merkitys". Erottele päivätty muutos nykytilan kuvauksesta.
+    Uusi avaus tai tuotejulkaisu ei todista suosiota. Jos muutoksista ei löytynyt
+    vertailukelpoisia tietoja, sano se lyhyesti äläkä täytä osiota oletuksilla.
   analysis_task: >
-    Produce a differentiation audit: proposed differentiator, which competitor already
-    offers it, evidence of buyer relevance, and verdict (table stakes, plausible gap,
-    unsupported). Challenge the user's assumed uniqueness and compare like-for-like.
-    Explain why a missing feature may reflect lack of demand rather than opportunity.
+    Arvioi ehdotettujen erojen todellisuus ja merkitys asiakkaalle. Käytä otsikoita
+    "Todelliset erot" ja "Erot, joita ei vielä voi vahvistaa".
+    Nimeä vertailukohde ja todiste. Erota todettu ominaisuus, oletettu asiakashyöty
+    ja tuntematon asia. Tiedon puuttuminen kilpailijan tarjonnasta ei todista,
+    ettei se tarjoa samaa. Älä väitä ratkaisua ainutlaatuiseksi tai paremmaksi ilman näyttöä.
   strategy_task: >
-    Produce at most two positioning options. For each name the buyer, costly problem,
-    specific deliverable, named alternative and tradeoff. Recommend one conditionally
-    using the audit, or explain why none is defensible. Avoid generic claims such as
-    innovative, agile or AI-powered without specifying a buyer benefit and evidence.
+    Ehdota enintään kahta tapaa erottua juuri tällä toimialalla ja alueella.
+    Käytä otsikoita "Mahdolliset tavat erottua" ja "Valinnan haittapuoli".
+    Nimeä asiakkaalle koituva hyöty, vertailtava vaihtoehto ja menetettävä etu tai riski.
+    Kerro, mikä on ehdotus ja mikä perustuu havaintoon. Jos uskottavaa eroa ei löytynyt,
+    sano se ja nimeä ratkaiseva puuttuva tieto. Älä keksi eroa vain täyttääksesi osion.
   report_task: >
-    Answer how the user's solution could credibly differ from named alternatives.
-    Summarize the decisive comparison, proposed positioning, tradeoff and missing
-    validation. Clearly distinguish observed competitor facts from suggested positioning.
-
+    Vastaa siihen, miten ratkaisu voisi erottua löydetyistä vaihtoehdoista.
+    Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset erot",
+    "Näytön vahvuus ja puutteet", "Suositeltava suunta" ja "Lähteet".
+    Tiivistä ratkaiseva vertailu ja ehdotuksen haittapuoli. Erota kilpailijoista
+    tarkistetut tiedot ehdotetusta erottautumisesta ja epävarmoista oletuksista.
 market:
   research_task: >
-    Produce a market map: actors, buyer groups, what is bought, and available local
-    indicators relevant to the user's question. Attach source, actual publisher,
-    geographic coverage and date to each finding. Distinguish employment, freelance
-    contracts and vendor marketing. No career advice or unsupported growth forecasts.
+    Kuvaa käyttäjän kysymyksen kannalta olennaiset toimijat, asiakkaat ja löydetyt
+    paikalliset havainnot. Käytä otsikoita "Markkinan nykytilanne" ja "Tiedon rajat".
+    Valitse tiedot aiheen mukaan: esimerkiksi tuotteiden myynti, palvelujen käyttö,
+    tapahtumien kävijät tai työvoiman kysyntä vain silloin, kun ne liittyvät kysymykseen.
+    Kerro lähteen alue ja ajankohta silloin kun ne tunnetaan. Älä keksi markkinan kokoa.
   trend_task: >
-    Produce a dated change log: what changed, compared with when, the mechanism and
-    one conflicting signal. Distinguish tool adoption, productivity, hiring and buying
-    demand; one does not prove the others. Mark international evidence as indirect
-    for a local market. Do not retell the market map.
+    Kuvaa enintään kolme kysymyksen kannalta olennaista muutosta lähteineen.
+    Käytä otsikoita "Havaitut muutokset" ja "Epävarmat kehityssuunnat".
+    Kerro, mitä verrataan ja miltä ajankohdilta tiedot ovat. Ilman aikavertailua
+    puhu nykytilan havainnosta, älä kasvusta. Erota toteutunut muutos ennusteesta.
+    Toisen maan tai alueen kehitystä ei saa esittää paikallisena tosiasiana.
   analysis_task: >
-    Produce a critical implications brief: strongest supported development, weakest
-    popular claim, competing explanation and who benefits or loses under each.
-    Audit claims about jobs, income and demand against their actual sources.
-    Reject unsupported publisher attribution and population changes. Focus on the
-    user's market question, not automatically on validating a new product.
+    Arvioi, mitä havainnot tarkoittavat juuri käyttäjän kysymykselle.
+    Käytä otsikoita "Mitä havainnoista voi päätellä" ja "Mitä ei voi päätellä".
+    Tarkista vahvin päätelmä sekä tärkein epävarmuus alkuperäisiä havaintoja vasten.
+    Nimeä ja korjaa perusteettomat väitteet. Älä oleta käyttäjän perustavan yritystä,
+    etsivän työtä tai kehittävän ohjelmistoa, ellei hän ole sitä kertonut.
   strategy_task: >
-    Produce concrete decision options relevant to the user's question. For a freelance
-    career question, specify at most two services: buyer, problem, bounded deliverable,
-    required capability, evidence-based rationale and risk. For other questions use
-    equally concrete actions suitable to that decision. Label proposals as hypotheses.
-    Do not merely recommend specializing in AI or doing more market research.
+    Muodosta enintään kaksi päätösvaihtoehtoa käyttäjän todelliseen kysymykseen.
+    Käytä otsikoita "Vaihtoehdot käyttäjälle" ja "Ratkaiseva epävarmuus".
+    Kerro vaihtoehdon hyöty, haitta ja havainto, johon se perustuu.
+    Jos käyttäjä pyytää vain tilannekuvaa, kerro seurattavat asiat toimintasuunnitelman sijaan.
+    Älä anna yleistä uraneuvontaa, tuoteideoita tai tutkimusohjeita aiheen ohi.
   report_task: >
-    Answer what is happening in this market and what it means for the user's actual
-    decision. Separate observed changes from scenarios. Include the critical audit,
-    concrete options and conditions under which the recommendation would change.
-    Do not repeat five generic market introductions or assume the user is launching a product.
+    Vastaa käyttäjän markkinakysymykseen löydetyn aineiston rajoissa.
+    Käytä otsikoita "Vastaus kysymykseesi", "Olennaiset havainnot",
+    "Näytön vahvuus ja puutteet", "Merkitys käyttäjälle" ja "Lähteet".
+    Erota nykytila, todennetut muutokset ja mahdolliset tulevat kehityskulut.
+    Älä käsittele kysymystä automaattisesti uuden tuotteen kysynnän arviointina.

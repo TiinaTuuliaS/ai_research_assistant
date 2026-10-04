@@ -32,6 +32,7 @@ from .security import hash_password, is_password_hash, token_hash, verify_passwo
 COOKIE_NAME = "research_session"
 SESSION_SECONDS = 12 * 60 * 60
 RESEARCH_LIMIT = 3
+ADMIN_USER_IDS = {int(value.strip()) for value in os.getenv("ADMIN_USER_IDS", "").split(",") if value.strip()}
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv(
     "ALLOWED_ORIGINS", "http://127.0.0.1:3000,http://localhost:3000"
@@ -163,6 +164,8 @@ def research_quota(db: Session, user_id: int):
             db.add(usage)
             db.commit()
         db.refresh(usage)
+        if user_id in ADMIN_USER_IDS:
+            return {"limit": None, "used": usage.used, "remaining": None, "unlimited": True}
         return {"limit": RESEARCH_LIMIT, "used": usage.used,
                 "remaining": max(0, RESEARCH_LIMIT - usage.used)}
 
@@ -170,9 +173,10 @@ def research_quota(db: Session, user_id: int):
 def reserve_research(db: Session, user_id: int):
     """Reserve before any paid call; the caller commits with the new job, if any."""
     research_quota(db, user_id)
-    changed = db.query(ResearchUsage).filter(
-        ResearchUsage.user_id == user_id, ResearchUsage.used < RESEARCH_LIMIT,
-    ).update({ResearchUsage.used: ResearchUsage.used + 1}, synchronize_session=False)
+    query = db.query(ResearchUsage).filter(ResearchUsage.user_id == user_id)
+    if user_id not in ADMIN_USER_IDS:
+        query = query.filter(ResearchUsage.used < RESEARCH_LIMIT)
+    changed = query.update({ResearchUsage.used: ResearchUsage.used + 1}, synchronize_session=False)
     if not changed:
         db.rollback()
         raise HTTPException(429, detail={
@@ -307,7 +311,7 @@ def run_job(job_id, data, session_hash):
             elif isinstance(exc, UnicodeError):
                 job.error = "Palvelimen tekstinkäsittelyssä tapahtui merkistövirhe."
             elif "guardrail" in str(exc).lower():
-                job.error = "Loppuraportti ei läpäissyt lähteiden tai raportin rakenteen tarkistusta. Agenttien välitulokset ovat säilyneet."
+                job.error = "Agentin teksti ei läpäissyt sisällön, kielen tai lähteiden tarkistusta. Jo valmistuneet välitulokset ovat säilyneet."
             else:
                 active = next((step["label"] for step in job.steps if step["status"] == "running"), "Tutkimuksen alustus")
                 job.error = f"{active}: tutkimus keskeytyi palvelinvirheeseen. Virheen tekniset tiedot on kirjattu palvelimen lokiin."

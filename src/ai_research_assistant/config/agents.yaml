@@ -30,7 +30,7 @@ strategist:
     Decision and Offering Strategist
   goal: >
     Turn the audited evidence into specific conditional decision options in {language}.
-    Name the buyer, problem, deliverable and tradeoff where relevant.
+    Adapt options to the actual domain, audience and question; label proposals as proposals.
   backstory: >
     You do not write market summaries. You explain a concrete choice and the evidence
     behind it, clearly marking proposed opportunities as hypotheses when unverified.

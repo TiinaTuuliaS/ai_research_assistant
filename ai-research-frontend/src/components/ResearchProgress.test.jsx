@@ -13,6 +13,13 @@ const steps = [
 ];
 beforeEach(() => { jest.clearAllMocks(); sessionStorage.clear(); });
 
+test("admin sees unlimited research and an enabled start button", () => {
+  render(<MemoryRouter><Dashboard user={{ user_id: 1, quota: { limit: null, used: 10, remaining: null, unlimited: true } }}
+    draft={{}} setDraft={() => {}} /></MemoryRouter>);
+  expect(screen.getByText("Ylläpitäjätili: rajattomat tutkimukset.")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Aloita tutkimus →" })).toBeEnabled();
+});
+
 test("exhausted quota prevents submission but keeps reports accessible", () => {
   render(<MemoryRouter><Dashboard user={{ user_id: 1, quota: { limit: 3, used: 3, remaining: 0 } }}
     draft={{}} setDraft={() => {}} /></MemoryRouter>);

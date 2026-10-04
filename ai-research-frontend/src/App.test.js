@@ -10,8 +10,8 @@ jest.mock("./components/History", () => () => <p>Private research history</p>);
 const unauthorized = () => Promise.reject(Object.assign(new Error("Unauthorized"), { status: 401 }));
 const fillBrief = () => {
   fireEvent.change(screen.getByLabelText("Mikä on ideasi?"), { target: { value: "Uusi palvelu" } });
-  fireEvent.change(screen.getByLabelText("Minkä ongelman idea ratkaisee?"), { target: { value: "Testaa kysyntää" } });
-  fireEvent.change(screen.getByLabelText("Kenelle idea on tarkoitettu?"), { target: { value: "Suomi, pienyritykset" } });
+  fireEvent.change(screen.getByLabelText("Mihin tarpeeseen tai toiveeseen idea vastaa?"), { target: { value: "Testaa kysyntää" } });
+  fireEvent.change(screen.getByLabelText("Kenelle ja mille alueelle idea on tarkoitettu?"), { target: { value: "Suomi, pienyritykset" } });
   fireEvent.change(screen.getByLabelText(/Kokeilubudjetti/), { target: { value: "0" } });
 };
 

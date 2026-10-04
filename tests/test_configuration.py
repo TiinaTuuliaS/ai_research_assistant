@@ -1,6 +1,7 @@
 from pathlib import Path
 import unittest
 import yaml
+from src.ai_research_assistant.quality import QUALITY_RULES
 
 
 class ConfigurationTests(unittest.TestCase):
@@ -17,7 +18,7 @@ class ConfigurationTests(unittest.TestCase):
             self.assertEqual(set(outputs), set(tasks))
             self.assertEqual(len(set(outputs.values())), 5)
             inputs = dict(topic="Test", current_year="2026", goal="Question", research_type=mode,
-                          target_market="Finland", budget="Unknown", language="suomi")
+                          target_market="Finland", budget="Unknown", language="suomi", quality_rules=QUALITY_RULES)
             inputs.update({f"{name}_deliverable": value for name, value in outputs.items()})
             for name, task in tasks.items():
                 self.assertIn(outputs[name], task["description"].format(**inputs))
@@ -36,6 +37,7 @@ class ConfigurationTests(unittest.TestCase):
                 for task in crew.tasks:
                     self.assertIn(inputs[f"{task.name}_deliverable"], task.description.format(**inputs))
                     self.assertIn(inputs[f"{task.name}_deliverable"], task.expected_output.format(**inputs))
+                    self.assertIsNotNone(task.guardrail)
             self.assertEqual(assistant.prepare({})["research_type"], "market")
             with self.assertRaises(ValueError):
                 assistant.prepare({"research_type": "invalid"})

@@ -21,12 +21,21 @@ class SourceSearchTool(SerperDevTool):
     """Use the built-in search, retaining evidence only for this crew instance."""
 
     _sources: dict[str, dict[str, str]] = PrivateAttr(default_factory=dict)
+    _search_count: int = PrivateAttr(default=0)
+
+    def reset_run(self):
+        self._sources.clear()
+        self._search_count = 0
 
     @property
     def sources(self) -> dict[str, dict[str, str]]:
         return self._sources
 
     def _run(self, **kwargs: Any) -> dict:
+        if self._search_count >= 6:
+            return {"citation_sources": list(self._sources.values()),
+                    "search_limit": "Search budget exhausted. Use existing evidence and state gaps; do not search again."}
+        self._search_count += 1
         results = super()._run(**kwargs)
         retrieved_at = datetime.now(timezone.utc).date().isoformat()
         for group in ("organic", "news", "peopleAlsoAsk"):

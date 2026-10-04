@@ -13,11 +13,16 @@ Myös keskeytyneet tutkimukset kuluttavat käyttökerran; aiemmat tutkimukset la
 mukaan. Raja tarkistetaan palvelimella, ja jäljellä olevat kerrat näkyvät lomakkeessa.
 Omia raportteja voi katsella rajan täytyttyäkin.
 
+Ylläpitäjän tutkimusrajan voi poistaa palvelimen `ADMIN_USER_IDS`-asetuksella
+(pilkuin erotetut olemassa olevien käyttäjien tietokantatunnisteet).
+Tunnisteet määritetään erikseen paikallisesti ja Railwayn ympäristömuuttujissa.
+Rajattomuus ei anna pääsyä muiden käyttäjien raportteihin.
+
 ## Teknologiat
 
 - **React ja JavaScript** – käyttöliittymä, React Router – sivujen reititys.
 - **Python ja FastAPI** – backend ja REST-rajapinta.
-- **CrewAI ja OpenAI (GPT-4o mini)** – agenttien yhteistyö ja raporttien tuottaminen.
+- **CrewAI ja OpenAI (GPT-4.1 mini)** – agenttien yhteistyö ja raporttien tuottaminen.
 - **Serper** – verkkohaku tutkimusten lähteitä varten.
 - **SQLite ja SQLAlchemy** – käyttäjien ja raporttien tallennus.
 - **CSS ja Framer Motion** – ulkoasu ja animaatiot.
@@ -81,6 +86,20 @@ npm --prefix ai-research-frontend run build
 Testit eivät tee maksullisia AI-hakuja. Varsinaiset tutkimukset käyttävät OpenAI- ja
 Serper-palveluita ja voivat aiheuttaa kustannuksia. Tulokset perustuvat verkkohakujen
 katkelmiin: lähdelinkkien tarkistus ei takaa kaikkien väitteiden oikeellisuutta.
+
+Kaikissa kolmessa tutkimustavassa agenttien tekstit tarkistetaan myös erillisellä
+mallikutsulla ennen seuraavaa vaihetta. Tarkistus arvioi kielen selkeyttä, aiheen
+mukaista sisältöä ja väitteiden tukea hakutuloskatkelmissa sekä korjaa sanamuotoja
+ja poistaa perusteettomia väitteitä. Mallin tekemä tarkistus ei takaa virheettömyyttä.
+Hylättyä välitulosta yritetään korjata kerran ja loppuraporttia enintään kahdesti.
+Yhden tutkimuksen verkkohakutyökalua voi kutsua enintään kuusi kertaa palveluun asti.
+Tarkistukset ja korjausyritykset lisäävät AI-kutsuja. Vanhoja raportteja ei muuteta.
+Mallin voi vaihtaa palvelimen `RESEARCH_MODEL`-asetuksella; oletus on
+`openai/gpt-4.1-mini`. Mallinvaihto vaikuttaa laatuun ja tokenien hintaan.
+
+Oikeita tuotoksia voi arvioida komennolla `uv run python -m scripts.evaluate_reports demand`
+(vaihtoehdot: `demand`, `competition`, `market`). Tämä käyttää API-krediittejä ja
+tallentaa testiraportin `.runtime/evaluations/`-kansioon, ei käyttäjien raportteihin.
 
 Paikallinen sovellus käyttää Reactia, FastAPI:a, SQLitea ja CrewAI:ta. Julkaisussa
 tarvitaan HTTPS, `COOKIE_SECURE=true`, oikea `ALLOWED_ORIGINS` ja pysyvä tietokantalevy.

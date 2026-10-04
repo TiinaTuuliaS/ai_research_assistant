@@ -1,8 +1,8 @@
 export const researchTypes = [
   { id: "demand", icon: "💡", title: "Onko idealleni kysyntää?", description: "Selvitä tarvetta, nykyisiä vaihtoehtoja ja kysynnän merkkejä.", outcome: "Saat arvion kysynnän merkeistä ja siitä, mitä ei vielä tiedetä.", fields: [
-    { name: "idea", label: "Mikä on ideasi?", placeholder: "Esim. asiakaspalautepalvelu pienyrityksille", max: 500 },
-    { name: "audience", label: "Kenelle idea on tarkoitettu?", placeholder: "Esim. suomalaiset 2–10 hengen palveluyritykset", max: 500 },
-    { name: "problem", label: "Minkä ongelman idea ratkaisee?", placeholder: "Kuvaile asiakkaan ongelma tai tarve.", max: 1000, multiline: true },
+    { name: "idea", label: "Mikä on ideasi?", placeholder: "Esim. curryravintola, pyörähuolto tai oppimissovellus", max: 500 },
+    { name: "audience", label: "Kenelle ja mille alueelle idea on tarkoitettu?", placeholder: "Esim. Tampereen lounasasiakkaat tai suomalaiset pienyritykset", max: 500 },
+    { name: "problem", label: "Mihin tarpeeseen tai toiveeseen idea vastaa?", placeholder: "Kuvaile, miksi joku valitsisi tuotteesi, palvelusi tai muun ideasi.", max: 1000, multiline: true },
   ] },
   { id: "competition", icon: "🔎", title: "Miten erotun kilpailijoista?", description: "Vertaa vaihtoehtoja ja löydä mahdollisia tapoja erottua.", outcome: "Saat vertailun kilpailijoiden vahvuuksista, eroista ja mahdollisista aukoista.", fields: [
     { name: "solution", label: "Mitä oma ratkaisusi tarjoaa?", placeholder: "Kuvaile tuotteesi tai palvelusi", max: 500 },

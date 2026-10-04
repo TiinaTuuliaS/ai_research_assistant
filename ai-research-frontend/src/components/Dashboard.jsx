@@ -128,8 +128,9 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
           <p id="budget-help" className="field-help">0 € tarkoittaa kokeilua ilman ostoja. Tyhjä kenttä jättää budjetin avoimeksi.</p>
           </details>
           <p className="field-help" aria-live="polite">
-            {user && quota ? `Tutkimuksia jäljellä: ${quota.remaining} / ${quota.limit}.` : "Jokaisella käyttäjätilillä voi tehdä yhteensä kolme tutkimusta."}
-            {" "}Aloitettu tutkimus kuluttaa yhden käyttökerran myös keskeytyessään.
+            {user && quota?.unlimited ? "Ylläpitäjätili: rajattomat tutkimukset."
+              : user && quota ? `Tutkimuksia jäljellä: ${quota.remaining} / ${quota.limit}.` : "Jokaisella käyttäjätilillä voi tehdä yhteensä kolme tutkimusta."}
+            {!quota?.unlimited && " Aloitettu tutkimus kuluttaa yhden käyttökerran myös keskeytyessään."}
           </p>
           {quotaExhausted && <p>Tilisi tutkimukset on käytetty. <Link to="/history">Avaa omat raportit →</Link></p>}
           <button className="button primary full-width" disabled={loading || checking || quotaExhausted}>
