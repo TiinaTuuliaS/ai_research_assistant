@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 from .database import SessionLocal, engine, get_db
 from .models import Base, LoginSession, Research, ResearchJob, ResearchUsage, User
 from .security import hash_password, is_password_hash, token_hash, verify_password
+from .ai_research_assistant.research_result import ResearchOutputError
 
 COOKIE_NAME = "research_session"
 SESSION_SECONDS = 12 * 60 * 60
@@ -308,6 +309,8 @@ def run_job(job_id, data, session_hash):
             job.status = "failed"
             if isinstance(exc, PermissionError):
                 job.error = "Istunto päättyi tutkimuksen aikana. Kirjaudu uudelleen sisään."
+            elif isinstance(exc, ResearchOutputError):
+                job.error = "Tutkijan tuloksen rakenne tai lähdeviitteet eivät läpäisseet tarkistusta. Tutkimus keskeytettiin ennen seuraavaa vaihetta."
             elif isinstance(exc, UnicodeError):
                 job.error = "Palvelimen tekstinkäsittelyssä tapahtui merkistövirhe."
             elif "guardrail" in str(exc).lower():
@@ -359,6 +362,8 @@ def research(data: ResearchRequest, request: Request,
     try:
         result = generate_report(data.topic, data.language, research_goal(data), data.target_market, data.budget_eur,
                                  **({"research_type": data.research_type} if data.research_type else {}))
+    except ResearchOutputError:
+        raise HTTPException(502, "Tutkijan tuloksen rakenne tai lähdeviitteet eivät läpäisseet tarkistusta.") from None
     except Exception:
         raise HTTPException(502, "Tutkimus tai lähteiden tarkistus epäonnistui. Yritä uudelleen.") from None
     db.expire_all()

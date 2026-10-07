@@ -87,8 +87,14 @@ Testit eivät tee maksullisia AI-hakuja. Varsinaiset tutkimukset käyttävät Op
 Serper-palveluita ja voivat aiheuttaa kustannuksia. Tulokset perustuvat verkkohakujen
 katkelmiin: lähdelinkkien tarkistus ei takaa kaikkien väitteiden oikeellisuutta.
 
-Kaikissa kolmessa tutkimustavassa agenttien tekstit tarkistetaan myös erillisellä
-mallikutsulla ennen seuraavaa vaihetta. Tarkistus arvioi kielen selkeyttä, aiheen
+Tutkija palauttaa kaikissa kolmessa tutkimustavassa Pydantic-validoidun
+`ResearchResult`-olion: aihe ja havainnot (otsikko, yhteenveto, HTTP(S)-lähdeosoite,
+osuvuus 1–10). CrewAI muodostaa olion `output_pydantic`-asetuksen avulla.
+Virheellinen rakenne tai haussa tuntematon lähde keskeyttää työn. Validoiduista
+kentistä muodostettu teksti välitetään nykyisille seuraaville agenteille ja
+raporttinäkymään. Osuvuus ei tarkoita lähteen luotettavuutta.
+
+Muiden agenttien tekstit tarkistetaan erillisellä mallikutsulla. Tarkistus arvioi kielen selkeyttä, aiheen
 mukaista sisältöä ja väitteiden tukea hakutuloskatkelmissa sekä korjaa sanamuotoja
 ja poistaa perusteettomia väitteitä. Mallin tekemä tarkistus ei takaa virheettömyyttä.
 Hylättyä välitulosta yritetään korjata kerran ja loppuraporttia enintään kahdesti.

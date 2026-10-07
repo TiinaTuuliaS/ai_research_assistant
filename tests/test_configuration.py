@@ -37,7 +37,12 @@ class ConfigurationTests(unittest.TestCase):
                 for task in crew.tasks:
                     self.assertIn(inputs[f"{task.name}_deliverable"], task.description.format(**inputs))
                     self.assertIn(inputs[f"{task.name}_deliverable"], task.expected_output.format(**inputs))
-                    self.assertIsNotNone(task.guardrail)
+                    if task.name == "research_task":
+                        from src.ai_research_assistant.research_result import ResearchResult
+                        self.assertIs(task.output_pydantic, ResearchResult)
+                        self.assertIsNotNone(task.callback)
+                    else:
+                        self.assertIsNotNone(task.guardrail)
             self.assertEqual(assistant.prepare({})["research_type"], "market")
             with self.assertRaises(ValueError):
                 assistant.prepare({"research_type": "invalid"})

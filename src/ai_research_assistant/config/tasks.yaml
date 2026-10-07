@@ -18,10 +18,13 @@ research_task:
     Päätelmät ja suositukset kuuluvat seuraaville agenteille.
   expected_output: >
     {research_task_deliverable}
-    Kirjoita kielellä {language} noin 150–250 sanaa ymmärrettävää tekstiä.
-    Käytä tehtävän otsikoita, englanniksi vain jos raportin kieli on englanti.
-    Liitä havaintoon lähdelinkki ja lyhyt tieto siitä, mitä lähde osoittaa.
-    Älä toista jokaiselle linkille pitkää julkaisija/kohderyhmä/rajoitus-lomaketta.
+    Palauta ResearchResult-rakenne: topic on tutkimusaihe ja findings on havaintolista.
+    Jokaisella havainnolla on title (selkeä otsikko), summary (mitä lähde kertoo ja
+    olennainen epävarmuus), source (tarkka citation_sources-URL) ja relevance
+    (kokonaisluku 1–10: osuvuus kysymykseen, ei luotettavuus tai kysynnän vahvuus).
+    Kirjoita tekstikentät kielellä {language}. Tämä rakenne korvaa tehtävän ehdottamat
+    tekstiotsikot: älä palauta vapaamuotoista raporttia tai erillistä lähdeluetteloa.
+    Jos sopivia havaintoja ei löydy, palauta tyhjä findings-lista, älä keksi sisältöä.
 trend_task:
   description: >
     {quality_rules}

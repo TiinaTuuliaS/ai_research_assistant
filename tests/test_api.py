@@ -130,6 +130,20 @@ class AuthenticationTests(unittest.TestCase):
         self.assertNotIn("invalid citations", response.text)
         self.assertEqual(self.client.get("/researches").json(), [])
 
+    def test_research_schema_error_is_clear_and_does_not_expose_output(self):
+        self.register_login()
+        with patch.object(api, "generate_report", side_effect=api.ResearchOutputError("private malformed output")):
+            response = self.client.post("/research-jobs", json={"topic": "Market"})
+            job = self.client.get(f'/research-jobs/{response.json()["id"]}').json()
+            self.assertEqual(job["status"], "failed")
+            self.assertIn("rakenne tai lähdeviitteet", job["error"])
+            self.assertNotIn("private", job["error"])
+            response = self.client.post("/research", json={"topic": "Market"})
+            self.assertEqual(response.status_code, 502)
+            self.assertIn("rakenne tai lähdeviitteet", response.json()["detail"])
+            self.assertNotIn("private", response.text)
+        self.assertEqual(self.client.get("/researches").json(), [])
+
     def test_research_brief_reaches_generator_and_rejects_invalid_budget(self):
         self.register_login()
         brief = {"topic": "Service", "goal": "Test demand", "target_market": "Finland", "budget_eur": 0}
