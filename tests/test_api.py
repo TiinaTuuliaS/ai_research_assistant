@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src import api
-from src.models import Base, LoginSession, Research, ResearchJob, ResearchUsage, User
+from src.models import Base, LoginSession, Research, ResearchJob, ResearchRecovery, ResearchUsage, User
 from src.security import is_password_hash, token_hash, verify_password
 
 
@@ -142,7 +142,10 @@ class AuthenticationTests(unittest.TestCase):
             self.assertEqual(response.status_code, 502)
             self.assertIn("rakenne tai lähdeviitteet", response.json()["detail"])
             self.assertNotIn("private", response.text)
-        self.assertEqual(self.client.get("/researches").json(), [])
+        entry = self.client.get("/researches").json()[0]
+        self.assertEqual(entry["status"], "failed")
+        self.assertEqual(entry["partial_result"], "")
+        self.assertFalse(entry["can_retry_report"])
 
     def test_research_brief_reaches_generator_and_rejects_invalid_budget(self):
         self.register_login()
@@ -189,7 +192,7 @@ class AuthenticationTests(unittest.TestCase):
 
     def test_job_progress_history_and_ownership(self):
         self.register_login()
-        def generate(*args, progress):
+        def generate(*args, progress, checkpoint):
             for i in range(5):
                 progress(i, "running", None)
                 with self.sessions() as db:
@@ -213,7 +216,7 @@ class AuthenticationTests(unittest.TestCase):
 
     def test_failed_job_keeps_progress_but_does_not_save_report(self):
         self.register_login()
-        def fail(*args, progress):
+        def fail(*args, progress, checkpoint):
             progress(0, "completed", "Actual finding")
             progress(1, "running", None)
             raise ValueError("secret provider detail")
@@ -224,7 +227,96 @@ class AuthenticationTests(unittest.TestCase):
         self.assertEqual(job["steps"][0]["status"], "completed")
         self.assertEqual(job["steps"][1]["status"], "failed")
         self.assertNotIn("secret", job["error"])
+        entry = self.client.get("/researches").json()[0]
+        self.assertIn("Actual finding", entry["partial_result"])
+        self.assertIn("ei hyväksytty", entry["partial_result"])
+        self.assertEqual(entry["result"], "")
+        self.assertFalse(entry["can_retry_report"])
+
+    def failed_writer_job(self):
+        def fail(*args, progress, checkpoint, **kwargs):
+            checkpoint(inputs={"topic": "Market", "language": "suomi", "current_year": "2026"},
+                       sources={"https://example.test": {"title": "Source", "snippet": "Evidence", "retrieved": "2026-10-07"}})
+            for i in range(4):
+                progress(i, "completed", f"Evidence {i}")
+            progress(4, "running", None)
+            checkpoint(draft="Unverified draft", feedback="Lähdeviitteet puuttuvat.")
+            raise ValueError("guardrail")
+        with patch.object(api, "generate_report", side_effect=fail):
+            return self.client.post("/research-jobs", json={"topic": "Market"}).json()["id"]
+
+    def test_writer_retry_preserves_quota_and_does_not_repeat_research(self):
+        self.register_login()
+        job_id = self.failed_writer_job()
+        path = f"/research-jobs/{job_id}"
+        before = self.client.get(path).json()
+        self.assertTrue(before["can_retry_report"])
+        self.assertEqual(before["draft"], "Unverified draft")
+        def resume(inputs, sources, steps, progress, checkpoint, draft, feedback):
+            self.assertEqual(draft, "Unverified draft")
+            self.assertEqual(feedback, "Lähdeviitteet puuttuvat.")
+            self.assertIn("https://example.test", sources)
+            self.assertEqual(steps[0]["output"], "Evidence 0")
+            progress(4, "running", None)
+            progress(4, "completed", "Validated report")
+            return "Validated report"
+        with patch.object(api, "resume_report", side_effect=resume) as writer, patch.object(api, "generate_report") as research:
+            self.assertEqual(self.client.post(path + "/retry-report").status_code, 202)
+            self.assertEqual(self.client.post(path + "/retry-report").status_code, 409)
+            writer.assert_called_once()
+            research.assert_not_called()
+        after = self.client.get(path).json()
+        self.assertEqual(after["status"], "completed")
+        self.assertEqual(after["quota"], before["quota"])
+        self.assertEqual(after["steps"][:4], before["steps"][:4])
+        self.assertEqual(len(self.client.get("/researches").json()), 1)
+
+    def test_failed_retry_retains_partial_results_and_private_ownership(self):
+        self.register_login()
+        job_id = self.failed_writer_job()
+        path = f"/research-jobs/{job_id}"
+        with patch.object(api, "resume_report", side_effect=RuntimeError("private provider error")):
+            self.assertEqual(self.client.post(path + "/retry-report").status_code, 202)
+        job = self.client.get(path).json()
+        self.assertEqual(job["status"], "failed")
+        self.assertIn("Evidence 0", job["partial_result"])
+        self.assertEqual(job["quota"]["used"], 1)
+        self.client.post("/logout")
+        self.register_login("another@example.test")
+        self.assertEqual(self.client.get(path).status_code, 404)
+        self.assertEqual(self.client.post(path + "/retry-report").status_code, 404)
         self.assertEqual(self.client.get("/researches").json(), [])
+
+    def test_retry_rejects_old_job_without_checkpoint_and_duplicate_start(self):
+        self.register_login()
+        job_id = self.failed_writer_job()
+        path = f"/research-jobs/{job_id}/retry-report"
+        from fastapi import BackgroundTasks
+        with patch.object(BackgroundTasks, "add_task"):
+            self.assertEqual(self.client.post(path).status_code, 202)
+            self.assertEqual(self.client.post(path).status_code, 409)
+        with self.sessions() as db:
+            db.get(ResearchJob, job_id).status = "failed"
+            db.delete(db.get(ResearchRecovery, job_id))
+            db.commit()
+        self.assertEqual(self.client.post(path).status_code, 409)
+
+    def test_restart_keeps_checkpoint_and_exposes_completed_partial_stages(self):
+        self.register_login()
+        job_id = self.failed_writer_job()
+        with self.sessions() as db:
+            job = db.get(ResearchJob, job_id)
+            job.status = "running"
+            job.steps = [*job.steps[:4], {**job.steps[4], "status": "running"}]
+            db.commit()
+        # Exercise the normal startup recovery against the existing database.
+        with TestClient(api.app):
+            pass
+        result = self.client.get(f"/research-jobs/{job_id}").json()
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("Evidence 0", result["partial_result"])
+        self.assertTrue(result["can_retry_report"])
+        self.assertEqual(result["draft"], "Unverified draft")
 
     def test_existing_job_is_reused_without_new_generation(self):
         owner = self.register_login().json()["user_id"]

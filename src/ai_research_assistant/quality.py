@@ -38,6 +38,21 @@ class QualityReview(BaseModel):
     issues: list[ReviewIssue] = Field(description="Only material defects; empty when acceptable")
 
 
+COMPETITION_REVIEW_RULES = """
+For competition research, check recommendations against named competitors' retrieved
+offerings. A feature already offered by a competitor is a shared feature, not by
+itself a differentiator. An evidenced difference from one competitor is not proof
+of market-wide uniqueness. Keep evidenced differences, shared features and untested
+proposals distinct. Correct a contradictory differentiation claim to describe
+matching existing competition or an explicitly untested proposal. Preserve the
+supported competitor observation and its citation; edit the unsupported recommendation,
+not the evidence that contradicts it. Never invent superior quality, a lower price,
+a broader selection or customer demand to rescue a recommendation. Missing information
+about a competitor is not evidence that it lacks a feature. A clearly labelled
+proposal may remain without proof of its success; do not reject it merely for uncertainty.
+""".strip()
+
+
 def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
                   reviewer: Any) -> tuple[bool, Any]:
     if not raw.strip():
@@ -69,6 +84,7 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
             "A claim is not verified because another agent repeated it. Compare to original snippets. "
             "Treat previously accepted stages as fallible too. Do not demand stylistic perfection. "
             "The required report language is in the brief. Apply these rules:\n" + QUALITY_RULES
+            + ("\n" + COMPETITION_REVIEW_RULES if brief.get("research_type") == "competition" else "")
         )},
         {"role": "user", "content": json.dumps({
             "brief": brief, "retrieved_evidence": list(sources.values()),

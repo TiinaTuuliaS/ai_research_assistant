@@ -54,18 +54,34 @@ competition:
     Nimeä vertailukohde ja todiste. Erota todettu ominaisuus, oletettu asiakashyöty
     ja tuntematon asia. Tiedon puuttuminen kilpailijan tarjonnasta ei todista,
     ettei se tarjoa samaa. Älä väitä ratkaisua ainutlaatuiseksi tai paremmaksi ilman näyttöä.
+    Tarkista jokaisesta ehdotetusta erottautumiskeinosta, tarjoaako nimetty kilpailija
+    jo samaa. Luokittele se yhteiseksi ominaisuudeksi, lähteellä osoitetuksi eroksi
+    tai vielä vahvistamattomaksi ehdotukseksi. Kerro vertailtava ominaisuus ja lähde.
+    Kilpailijan jo tarjoama ominaisuus on kilpailuun vastaamista, ei sellaisenaan
+    erottautumista. Ero yhteen kilpailijaan ei osoita eroa koko markkinaan.
   strategy_task: >
     Ehdota enintään kahta tapaa erottua juuri tällä toimialalla ja alueella.
     Käytä otsikoita "Mahdolliset tavat erottua" ja "Valinnan haittapuoli".
     Nimeä asiakkaalle koituva hyöty, vertailtava vaihtoehto ja menetettävä etu tai riski.
     Kerro, mikä on ehdotus ja mikä perustuu havaintoon. Jos uskottavaa eroa ei löytynyt,
     sano se ja nimeä ratkaiseva puuttuva tieto. Älä keksi eroa vain täyttääksesi osion.
+    Perustele jokainen suositus analyytikon vertailulla: mihin nimettyyn kilpailijaan
+    nähden ja millä konkreettisella tavalla suunniteltu tarjonta eroaisi?
+    Jos kilpailija tarjoaa jo samaa, kuvaa vaihtoehto kilpailuun vastaamisena.
+    Älä keksi parempaa laatua, halvempaa hintaa tai laajempaa valikoimaa eroksi.
+    Ilman osoitettua eroa esitä mahdollinen uusi suunta testattavana ehdotuksena
+    ja kerro, mitä siitä pitäisi varmistaa. Älä lupaa asiakaskysyntää eron perusteella.
   report_task: >
     Vastaa siihen, miten ratkaisu voisi erottua löydetyistä vaihtoehdoista.
     Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset erot",
     "Näytön vahvuus ja puutteet", "Suositeltava suunta" ja "Lähteet".
     Tiivistä ratkaiseva vertailu ja ehdotuksen haittapuoli. Erota kilpailijoista
     tarkistetut tiedot ehdotetusta erottautumisesta ja epävarmoista oletuksista.
+    Säilytä ero yhteisen ominaisuuden, osoitetun eron ja testattavan ehdotuksen välillä.
+    Älä nosta kilpailijan jo tarjoamaa ominaisuutta sellaisenaan erottautumiskeinoksi.
+    Keskity nykyisten vaihtoehtojen vertailuun. Käsittele ajallista kehitystä vain,
+    jos lähteistetty muutos auttaa vastaamaan kysymykseen; älä lisää irrallista
+    vuosivertailua tai sen puuttumista koskevaa kappaletta.
 market:
   research_task: >
     Kuvaa käyttäjän kysymyksen kannalta olennaiset toimijat, asiakkaat ja löydetyt

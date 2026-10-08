@@ -13,6 +13,19 @@ Myös keskeytyneet tutkimukset kuluttavat käyttökerran; aiemmat tutkimukset la
 mukaan. Raja tarkistetaan palvelimella, ja jäljellä olevat kerrat näkyvät lomakkeessa.
 Omia raportteja voi katsella rajan täytyttyäkin.
 
+Keskeytyneen tutkimuksen valmistuneet osatulokset näkyvät myös omissa raporteissa.
+Niistä muodostetaan ilman uutta AI-kutsua kooste, joka merkitään keskeneräiseksi
+myös PDF-viennissä. Hylätty kirjoittajan luonnos näkyy erikseen tarkistamattomana.
+Jos neljä ensimmäistä vaihetta valmistuivat ja lähdeaineisto tallentui,
+voit korjata tallennettua loppuraporttiluonnosta kuluttamatta uutta tutkimuskertaa.
+Kirjoittaja saa luonnoksen, tarkan hylkäyssyyn ja lähteet. Se ehdottaa vain yksilöityjen
+tekstikohtien korvauksia, jotka sovellus soveltaa luonnokseen. Muut kohdat säilyvät
+ennallaan ennen tavallista sisältö- ja lähdetarkistusta. Epäselviä tai päällekkäisiä
+korvauksia ei sovelleta. Korjaus ei takaa hyväksyntää, jos lähdeaineisto ei riitä.
+Korjaus käyttää AI-palvelua ja aiheuttaa ylläpitäjälle API-kuluja, mutta ei tee uusia
+verkkohakuja. Vanhoille tutkimuksille uusinta ei ole saatavilla, jos jatkamistietoja
+ei tallennettu. Jos mikään vaihe ei valmistunut, sovellus kertoo sen suoraan.
+
 Ylläpitäjän tutkimusrajan voi poistaa palvelimen `ADMIN_USER_IDS`-asetuksella
 (pilkuin erotetut olemassa olevien käyttäjien tietokantatunnisteet).
 Tunnisteet määritetään erikseen paikallisesti ja Railwayn ympäristömuuttujissa.

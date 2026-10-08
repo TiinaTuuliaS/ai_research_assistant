@@ -91,6 +91,9 @@ report_task:
     Mainitse, että aineisto koostuu hakutuloskatkelmista, ei kokonaisista sivuista.
     Tarkista lopuksi jokainen otsikko ja virke: ymmärtääkö tavallinen lukija sen
     ilman agenttityön tai liiketoimintasanaston tuntemista? Kirjoita epäselvä kohta uudelleen.
+    Puhuttele käyttäjää luontevasti: esimerkiksi "ideasi", "palvelusi" tai
+    "suunnittelemasi ravintola" aiheen mukaan, ei "käyttäjän ratkaisu".
+    Käytä tavallisia sanoja, kuten "kilpailutilanne" ilmauksen "kilpailun dynamiikka" sijaan.
   expected_output: >
     {report_task_deliverable}
     Kielellä {language} kirjoitettu 300–500 sanan loppuraportti lähteiden lisäksi.

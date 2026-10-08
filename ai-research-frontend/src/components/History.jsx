@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ResearchReport from "./ResearchReport";
 import ReportActions from "./ReportActions";
+import PartialResults from "./PartialResults";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
 
@@ -53,8 +54,10 @@ function History({ user }) {
       {selected && (
         <div style={styles.selectedCard}>
           <h2>📄 {selected.topic}</h2>
-          <ReportActions key={selected.id} topic={selected.topic} result={selected.result} steps={selected.steps} />
-          <ResearchReport result={selected.result} steps={selected.steps} />
+          {selected.status && selected.status !== "completed"
+            ? <PartialResults key={selected.id} initialJob={selected} />
+            : <><ReportActions key={selected.id} topic={selected.topic} result={selected.result} steps={selected.steps} />
+              <ResearchReport result={selected.result} steps={selected.steps} /></>}
         </div>
       )}
 
@@ -67,6 +70,7 @@ function History({ user }) {
           onClick={() => setSelected(r)}
           >
           <h3>{r.topic}</h3>
+          {r.status && r.status !== "completed" && <p>{r.status === "failed" ? "Osatulokset · loppuraportti kesken" : "Tutkimus käynnissä"}</p>}
           <p style={{ color: "var(--accent)" }}>
             Klikkaa avataksesi →
           </p>
@@ -84,15 +88,15 @@ const styles = {
   },
 
   selectedCard: {
-    background: "#f2ecfb",
+    background: "var(--tint)",
     padding: "20px",
     borderRadius: "12px",
     marginBottom: "20px",
-    border: "2px solid var(--lavender)"
+    border: "2px solid var(--secondary)"
   },
 
   card: {
-    background: "white",
+    background: "var(--surface)",
     padding: "20px",
     borderRadius: "12px",
     marginBottom: "20px",

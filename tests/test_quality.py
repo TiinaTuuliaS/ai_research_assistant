@@ -1,11 +1,40 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from src.ai_research_assistant.quality import review_output, QualityReview, ReviewIssue
+from src.ai_research_assistant.quality import review_output, QualityReview, ReviewIssue, COMPETITION_REVIEW_RULES
 from src.ai_research_assistant.tools.search_tool import SourceSearchTool
 
 
 class QualityTests(unittest.TestCase):
+    def test_competition_review_preserves_evidence_when_correcting_recommendation(self):
+        import json
+
+        evidence = "Kilpailija tarjoaa vegaanisen buffetin [Menu](https://example.test/menu)."
+        claim = "Erotut vegaanisella buffetilla."
+        correction = "Vegaaninen buffet vastaisi nykyiseen kilpailuun; eroa ei ole vielä osoitettu."
+        sources = {"https://example.test/menu": {"snippet": "Vegaaninen buffet"}}
+        reviewer = Mock()
+        reviewer.call.return_value = QualityReview(issues=[ReviewIssue(excerpt=claim, correction=correction)])
+        ok, result = review_output(evidence + "\n" + claim, sources=sources,
+                                  brief={"research_type": "competition"}, previous=[], reviewer=reviewer)
+        self.assertTrue(ok)
+        self.assertIn(evidence, result)
+        self.assertIn(correction, result)
+        messages = reviewer.call.call_args.args[0]
+        self.assertIn(COMPETITION_REVIEW_RULES, messages[0]["content"])
+        self.assertEqual(json.loads(messages[1]["content"])["retrieved_evidence"], list(sources.values()))
+
+    def test_competition_rules_are_scoped_and_honest_proposals_can_pass(self):
+        reviewer = Mock()
+        reviewer.call.return_value = QualityReview(issues=[])
+        text = "Testattava ehdotus: iltapalvelu. Kilpailijoiden aukioloajoista ei ole tietoa."
+        for mode in ("competition", "demand", "market"):
+            with self.subTest(mode=mode):
+                self.assertEqual(review_output(text, sources={}, brief={"research_type": mode},
+                                               previous=[], reviewer=reviewer), (True, text))
+                prompt = reviewer.call.call_args.args[0][0]["content"]
+                self.assertEqual(COMPETITION_REVIEW_RULES in prompt, mode == "competition")
+
     def test_reviewer_receives_original_evidence_and_corrects_material_issues(self):
         sources = {"https://example.test/menu": {"url": "https://example.test/menu", "snippet": "Lounas 12 euroa"}}
         reviewer = Mock()

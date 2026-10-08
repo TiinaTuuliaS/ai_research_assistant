@@ -32,7 +32,23 @@ class ReportRetryTests(unittest.TestCase):
             self.assertIn("Hinta 12 euroa", contexts[1])
             self.assertIn("https://two.test/products", contexts[1])
             self.assertIn("Evidence is limited", contexts[1])
+            self.assertNotIn("Unsupported claim", contexts[1])
             self.assertIn("Haettu 2026-10-07", output.raw)
+
+    def test_review_removed_claim_and_link_do_not_reenter_retry_context(self):
+        from crewai.tasks.task_output import TaskOutput
+
+        raw = "Unsupported claim [One](https://one.test/menu).\n\n## Sources\n"
+        reviewed = "Evidence is limited.\n\n## Sources\n"
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \
+             patch("src.ai_research_assistant.crew.review_output", return_value=(True, reviewed)):
+            assistant = AiResearchAssistant()
+            output = TaskOutput(description="Report", agent="Writer", raw=raw)
+            valid, feedback = assistant.check_sources(output)
+            self.assertFalse(valid)
+            self.assertEqual(output.raw, reviewed)
+            self.assertNotIn("Unsupported claim", feedback)
+            self.assertNotIn("https://one.test/menu", output.raw)
 
     def test_repair_feedback_still_rejects_missing_citations(self):
         from crewai.tasks.task_output import TaskOutput

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import ResearchReport from "./ResearchReport";
 import ReportActions from "./ReportActions";
 import AgentProgress from "./AgentProgress";
+import PartialResults from "./PartialResults";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import ExampleReport from "./ExampleReport";
@@ -50,7 +51,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
         if (data.status === "completed" || data.status === "failed") {
           sessionStorage.removeItem(storageKey); setJobId(null); setLoading(false);
           if (data.status === "completed") { setResult(data.result); setReportTopic(data.topic); }
-          else setError(data.error || "Tutkimus keskeytyi.");
+          else setError("");
         } else timer = setTimeout(poll, 1000);
       } catch (error) {
         if (controller.signal.aborted) return;
@@ -141,14 +142,11 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
         {error && <p role="alert" className="error">{error}</p>}
         {loading && !job && <p role="status">Käynnistetään tutkimusta…</p>}
         {connectionError && <p role="alert">{connectionError} <button type="button" onClick={() => setPollAttempt(n => n + 1)}>Jatka edistymisen seurantaa</button></p>}
-        {job && <AgentProgress job={job} />}
+        {job && job.status !== "failed" && <AgentProgress job={job} />}
       </form>
     </section>
 
-    {job?.status === "failed" && job.steps?.some(step => step.output) && <section className="panel result-section">
-      <h2>Tutkimuksen valmistuneet välitulokset</h2><p>Loppuraportti jäi kesken. Nämä ovat valmistuneiden agenttien vastauksia, eivät tarkistettu loppuraportti.</p>
-      <ResearchReport result="" steps={job.steps} />
-    </section>}
+    {job?.status === "failed" && <PartialResults key={job.id} initialJob={job} />}
     {result && <section className="panel result-section" aria-label="Tutkimusraportti">
       <div className="result-header"><div><p className="eyebrow">Tutkimuksesi on valmis</p><h2>{reportTopic}</h2></div>
       </div>

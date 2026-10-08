@@ -3,6 +3,16 @@ import ReportActions from "./ReportActions";
 jest.mock("react-markdown", () => ({ children }) => <div>{children}</div>);
 const props = { topic: "Test <script>", result: "Final answer", steps: [{ key: "researcher", label: "Tutkija", output: "Actual perspective" }] };
 afterEach(() => jest.restoreAllMocks());
+test("partial PDF stays explicitly unvalidated and has no final report heading", () => {
+  const doc = document.implementation.createHTMLDocument();
+  const popup = { document: doc, focus: jest.fn(), print: jest.fn() };
+  jest.spyOn(window, "open").mockReturnValue(popup);
+  render(<ReportActions topic="Idea" result="# Tutkimuksen osatulokset\nVälitulos" partial />);
+  fireEvent.click(screen.getByText("Tallenna PDF"));
+  expect(doc.body.textContent).toContain("ei hyväksytty loppuraportti");
+  expect(doc.body.textContent).toContain("Välitulos");
+  expect(doc.body.textContent).not.toContain("Yhdistetty loppuraportti");
+});
 test("PDF print document contains all perspectives and escapes the title", () => {
   const doc = document.implementation.createHTMLDocument();
   const popup = { document: doc, focus: jest.fn(), print: jest.fn() };
