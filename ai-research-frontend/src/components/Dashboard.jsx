@@ -161,6 +161,6 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
       <article><span className="step-number">03</span><h2>Lähteet näkyvillä</h2><p>Tarkista havaintojen lähteet ja arvioi, kuinka hyvin aineisto vastaa kysymykseesi.</p></article>
     </section>
     <ExampleReport />
-    <section className="method-note"><h2>Mihin raportti perustuu?</h2><p>Agentit työskentelevät peräkkäin ja hyödyntävät aiempien vaiheiden tuloksia. Aineistona ovat verkkohakujen katkelmat. Loppuraportti erottaa lähteistetyt havainnot, tulkinnat ja avoimet kysymykset.</p></section>
+    <section className="method-note"><h2>Mihin raportti perustuu?</h2><p>Agentit työskentelevät peräkkäin ja hyödyntävät aiempien vaiheiden tuloksia. Aineistona ovat hakutuloskatkelmat ja osasta lähdesivuja poimitut tekstit. Kartoitus ei ole kattava; löydetyt toimijat ovat esimerkkejä, eivät alueen kokonaismäärä. Loppuraportti erottaa lähteistetyt havainnot, tulkinnat ja avoimet kysymykset.</p></section>
   </main>;
 }

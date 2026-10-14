@@ -6,6 +6,36 @@ from src.ai_research_assistant.tools.search_tool import SourceSearchTool
 
 
 class QualityTests(unittest.TestCase):
+    def test_researcher_cannot_spend_trend_search_reserve(self):
+        tool = SourceSearchTool()
+        tool.set_search_limit(3)
+        with patch("crewai_tools.SerperDevTool._run", return_value={"organic": []}) as search:
+            for _ in range(5):
+                tool._run(search_query="local evidence")
+            self.assertEqual(search.call_count, 3)
+            tool.set_search_limit(6)
+            for _ in range(5):
+                tool._run(search_query="international developments")
+            self.assertEqual(search.call_count, 6)
+
+    def test_reviewer_receives_page_evidence_and_can_limit_provider_count(self):
+        import json
+        source = {"url": "https://example.test/services", "snippet": "Indoor cycling",
+                  "page_status": "retrieved", "page_text": "Tampereen toimipiste: sisäpyöräily tiistaisin."}
+        reviewer = Mock()
+        reviewer.call.return_value = QualityReview(issues=[ReviewIssue(
+            excerpt="Tampereella on vain kaksi spinning-salia.",
+            correction="Haussa löytyi kaksi esimerkkiä spinningin tarjoajista. Kartoitus ei ole kattava.")])
+        ok, result = review_output("Tampereella on vain kaksi spinning-salia.",
+                                  sources={source["url"]: source}, brief={"research_type": "market"},
+                                  previous=[], reviewer=reviewer)
+        self.assertTrue(ok)
+        self.assertNotIn("vain kaksi", result)
+        self.assertIn("Kartoitus ei ole kattava", result)
+        messages = reviewer.call.call_args.args[0]
+        self.assertEqual(json.loads(messages[1]["content"])["retrieved_evidence"][0]["page_text"], source["page_text"])
+        self.assertIn("total-provider counts", messages[0]["content"])
+
     def test_competition_review_preserves_evidence_when_correcting_recommendation(self):
         import json
 

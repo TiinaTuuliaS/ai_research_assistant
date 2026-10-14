@@ -9,11 +9,18 @@ vaativat kirjautumisen. Raportin voi ladata tekstinä, tallentaa PDF:ksi selaime
 tulostustoiminnolla tai jakaa siitä otteen.
 
 Käyttäjätilillä voi aloittaa yhteensä kolme tutkimusta kaikista tutkimustavoista.
-Myös keskeytyneet tutkimukset kuluttavat käyttökerran; aiemmat tutkimukset lasketaan
-mukaan. Raja tarkistetaan palvelimella, ja jäljellä olevat kerrat näkyvät lomakkeessa.
+Jos uusi tutkimus epäonnistuu ennen luettavien osatulosten syntymistä, käyttökerta
+palautetaan. Aiemmat tutkimukset lasketaan mukaan. Raja tarkistetaan palvelimella,
+ja jäljellä olevat kerrat näkyvät lomakkeessa.
 Omia raportteja voi katsella rajan täytyttyäkin.
 
 Keskeytyneen tutkimuksen valmistuneet osatulokset näkyvät myös omissa raporteissa.
+Jos AI-kirjoittaja tai myöhempi vaihe epäonnistuu mutta tarkistettuja tuloksia on,
+sovellus kokoaa niistä ilman uutta AI-kutsua rajatun raportin päätelmineen ja lähteineen.
+Se tallentuu omiin raportteihin ja kertoo, että analyysi jäi osittaiseksi.
+Kooste säilyttää valmistuneen analyysin tai suosituksen; jos vain havaintoja on valmiina,
+päätelmä kertoo tutkimustavan mukaisesti, mitä niistä ei vielä voi ratkaista.
+Raakaa lähdetekstiä tai hylättyä luonnosta ei julkaista vararaporttina.
 Niistä muodostetaan ilman uutta AI-kutsua kooste, joka merkitään keskeneräiseksi
 myös PDF-viennissä. Hylätty kirjoittajan luonnos näkyy erikseen tarkistamattomana.
 Jos neljä ensimmäistä vaihetta valmistuivat ja lähdeaineisto tallentui,
@@ -97,21 +104,67 @@ npm --prefix ai-research-frontend run build
 ```
 
 Testit eivät tee maksullisia AI-hakuja. Varsinaiset tutkimukset käyttävät OpenAI- ja
-Serper-palveluita ja voivat aiheuttaa kustannuksia. Tulokset perustuvat verkkohakujen
-katkelmiin: lähdelinkkien tarkistus ei takaa kaikkien väitteiden oikeellisuutta.
+Serper-palveluita ja voivat aiheuttaa kustannuksia. Aineistona käytetään hakukatkelmia
+ja enintään kuudelta julkiselta lähdesivulta poimittua tekstiä (enintään 8 000 merkkiä
+sivulta). Lähdeluettelo kertoo, mistä sivuteksti saatiin ja mikä jäi hakukatkelmaksi.
+Sivun lukeminen ei takaa väitteiden oikeellisuutta. Kartoitus ei ole kattava:
+löytyneiden toimijoiden määrä ei ole markkinan kokonaismäärä.
 
 Tutkija palauttaa kaikissa kolmessa tutkimustavassa Pydantic-validoidun
-`ResearchResult`-olion: aihe ja havainnot (otsikko, yhteenveto, HTTP(S)-lähdeosoite,
-osuvuus 1–10). CrewAI muodostaa olion `output_pydantic`-asetuksen avulla.
-Virheellinen rakenne tai haussa tuntematon lähde keskeyttää työn. Validoiduista
+`ResearchResult`-olion: aihe ja havainnot (otsikko, yhteenveto, lähdetunniste,
+osuvuus 1–10, tiedon tyyppi, kohde, alue, ajankohta ja
+rajaukset). Tuntemattomia alueita ja ajankohtia ei täydennetä oletuksilla.
+CrewAI muodostaa olion `output_pydantic`-asetuksen avulla. Jokaiselle lähteelle annetaan
+pysyvä tunniste tutkimuksen sisällä, kuten `S1`. Agentit käyttävät tunnisteita, ja
+palvelin muodostaa linkit alkuperäisistä osoitteista. Vanhat URL-pohjaiset tallenteet toimivat edelleen.
+Jokainen uusi havainto sisältää yksityisen `supporting_text`-tukikatkelman omasta
+lähteestään. Palvelin tarkistaa, että katkelma löytyy tallennetusta aineistosta.
+Ajanjaksolle annetaan erillinen `period_support`; tuntematon ajankohta jätetään tyhjäksi.
+Havainnon vuosilukua ei hyväksytä, jos se puuttuu valituista tukiteksteistä.
+Lähteen julkaisupäivä ja hakupäivä säilytetään erillään havainnon ajanjaksosta.
+Julkaisupäivä poimitaan eksplisiittisestä metatiedosta tai päivätystä artikkeliosoitteesta;
+puuttuvaa päivää ei arvata. Katkelmat tallentuvat yksityiseen tarkistusaineistoon, eivät raporttitekstiin.
+Rakennevirhettä yritetään korjata kerran. Tuntemattomaan tai tyhjään lähteeseen
+viittaava havainto jätetään pois; muut havainnot jatkavat.
+Jos yhtään havaintoa ei jää, tutkijan tulos kertoo aineiston puutteesta.
+Erillinen AI-tarkistus arvioi, tukeeko lähde
+havainnon sisältöä ja luokittelua. Raportissa näkyvät omin sanoin kirjoitetut havainnot
+ja niiden rajaukset, eivät lähdekatkelmat tai sisäiset hylkäyslistat.
+Validoiduista
 kentistä muodostettu teksti välitetään nykyisille seuraaville agenteille ja
-raporttinäkymään. Osuvuus ei tarkoita lähteen luotettavuutta.
+raporttinäkymään. Havaintojen tunnisteet ja rajaukset säilyvät sisältötarkistuksessa
+ja tallennetuissa jatkamistiedoissa. Osuvuus ei tarkoita lähteen luotettavuutta.
+Trendianalyytikko etsii myös kansainvälisiä kehityssuuntia ja arvioi niiden paikallisen
+soveltamisen rajoja. Yksittäinen konseptiesimerkki erotetaan trendistä ja ennusteesta.
+Myös trendivaihe palauttaa Pydantic-rakenteen: jokaisella havainnolla on lähde,
+alue, ajankohta, luokitus (havaittu muutos, ennuste tai esimerkki) ja soveltamisen rajat.
+Valittujen lähteiden käyttötarkoitus ja valintaperustelu tallennetaan tutkimuksen
+lähdeaineistoon. Käytettyjen lähteiden perustelut näkyvät lähdeluettelossa.
+Hyväksytyt trendihavainnot säilyvät loppuraportin lähteet ja rajaukset -osiossa,
+vaikka kirjoittaja jättäisi niiden viitteitä pois yhteenvedosta.
+Strategi erottaa osoitetun eron, yhteisen ominaisuuden ja testattavan ehdotuksen.
+Loppuraportin johtopäätökset tarkistetaan alkuperäisiä havaintoja ja lähteitä vasten;
+sisältötarkistuksen muokkaama raportti tarkistetaan vielä kerran. Nämä tarkistukset
+lisäävät AI-kutsuja. Mallin tekemä sisältötarkistus ei takaa virheettömyyttä.
 
 Muiden agenttien tekstit tarkistetaan erillisellä mallikutsulla. Tarkistus arvioi kielen selkeyttä, aiheen
-mukaista sisältöä ja väitteiden tukea hakutuloskatkelmissa sekä korjaa sanamuotoja
+mukaista sisältöä ja väitteiden tukea lähteiden sivuteksteissä tai hakukatkelmissa sekä korjaa sanamuotoja
 ja poistaa perusteettomia väitteitä. Mallin tekemä tarkistus ei takaa virheettömyyttä.
-Hylättyä välitulosta yritetään korjata kerran ja loppuraporttia enintään kahdesti.
+Hylättyä välitulosta ja loppuraporttia yritetään korjata kerran.
+Hylätystä tutkimushavainnosta yritetään kerran säilyttää suppeampi, saman lähteen
+tukema havainto. Korjattu havainto tarkistetaan uudelleen. Tarjontahavainto ei
+edellytä näyttöä kysynnästä. Tämä korjaus voi lisätä enintään kaksi AI-kutsua.
+Varakooste tunnistaa myös tavalliset lähdeosoitteet ja tarkistaa ne tallennetuista lähteistä.
+Jos tutkijan havaintojen sisältötarkistus palauttaa virheellisen rakenteen tai
+puutteellisen arviolistan, vain tarkistus uusitaan kerran; verkkohakua ei toisteta.
 Yhden tutkimuksen verkkohakutyökalua voi kutsua enintään kuusi kertaa palveluun asti.
+Tutkija ja trendianalyytikko valitsevat hakutuloksista luettavat alkuperäiset sivut
+aiheen mukaan. Sivulukuja tehdään enintään kuusi: tutkijalle enintään kolme ja
+loput trendivaiheessa. Muualla toimivat vertailukohteet erotetaan paikallisesta näytöstä.
+Havaintojen tarkistuksessa jokaisen väitteen mukana kulkee vain sen oman lähteen
+aineisto. Tarkistus arvioi erikseen alueellisen yleistyksen ja lähteen riittävyyden.
+Jos viimeistely epäonnistuu, varakooste voidaan tallentaa raportiksi. Hylätty luonnos
+ja tarkistuksen perustelu säilyvät erikseen tutkimuksen yksityisissä jatkamistiedoissa.
 Tarkistukset ja korjausyritykset lisäävät AI-kutsuja. Vanhoja raportteja ei muuteta.
 Mallin voi vaihtaa palvelimen `RESEARCH_MODEL`-asetuksella; oletus on
 `openai/gpt-4.1-mini`. Mallinvaihto vaikuttaa laatuun ja tokenien hintaan.
@@ -124,3 +177,8 @@ Paikallinen sovellus käyttää Reactia, FastAPI:a, SQLitea ja CrewAI:ta. Julkai
 tarvitaan HTTPS, `COOKIE_SECURE=true`, oikea `ALLOWED_ORIGINS` ja pysyvä tietokantalevy.
 Frontendin API-osoitteen voi asettaa `REACT_APP_API_URL`-muuttujalla buildin yhteydessä.
 Käytä yhtä backend-prosessia: uudelleenkäynnistys keskeyttää käynnissä olevat tutkimukset.
+
+Tutkimusten tekniset virhetiedot tallentuvat tiedostoon `.runtime/backend-errors.log`,
+joten ne säilyvät terminaalin sulkemisen jälkeen. Loki sisältää virhetyypin,
+koodikohdat ja validoinnissa epäonnistuneet kentät, ei raporttisisältöä tai API-avaimia.
+Lokit kiertävät automaattisesti (enintään kolme noin 1 Mt:n tiedostoa).

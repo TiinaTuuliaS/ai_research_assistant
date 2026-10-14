@@ -17,7 +17,7 @@ demand:
     "Mikä on perusteltua" ja "Mitä aineisto ei osoita".
     Kerro jokaisesta olennaisesta päätelmästä, mikä havainto sitä tukee ja kuinka
     pitkälle päätelmä ulottuu. Erota kiinnostus, toteutunut käyttö ja ostaminen.
-    Nimeä aiempien agenttien perusteettomat väitteet ja korjaa ne avoimesti.
+    Korjaa perusteettomat päätelmät lähteiden sallimaan muotoon ilman sisäistä agenttien virhelistaa.
     Älä tulkitse kysyntätiedon puuttumista todisteeksi kysynnän puuttumisesta.
   strategy_task: >
     Kerro, mikä päätös on nykyisen tiedon perusteella mahdollinen ja mikä ei.
@@ -99,7 +99,7 @@ market:
     Arvioi, mitä havainnot tarkoittavat juuri käyttäjän kysymykselle.
     Käytä otsikoita "Mitä havainnoista voi päätellä" ja "Mitä ei voi päätellä".
     Tarkista vahvin päätelmä sekä tärkein epävarmuus alkuperäisiä havaintoja vasten.
-    Nimeä ja korjaa perusteettomat väitteet. Älä oleta käyttäjän perustavan yritystä,
+    Korjaa perusteettomat päätelmät ilman sisäistä virhelistaa. Älä oleta käyttäjän perustavan yritystä,
     etsivän työtä tai kehittävän ohjelmistoa, ellei hän ole sitä kertonut.
   strategy_task: >
     Muodosta enintään kaksi päätösvaihtoehtoa käyttäjän todelliseen kysymykseen.

@@ -15,6 +15,8 @@ function History({ user }) {
   const [attempt, setAttempt] = useState(0);
   const userId = user?.user_id;
   const requestedId = useLocation().state?.researchId;
+  const completed = researches.filter(r => !r.status || r.status === "completed").sort((a, b) => b.id - a.id);
+  const unfinished = researches.filter(r => r.status && r.status !== "completed");
 
   // 🔥 AINA HOOKIT ENSIN
   useEffect(() => {
@@ -45,7 +47,8 @@ function History({ user }) {
 
   return (
     <div style={styles.page}>
-      <h1>📜 Aiemmat haut</h1>
+      <h1>📜 Omat raportit</h1>
+      <button className="button subtle" disabled={loading} onClick={() => setAttempt(n => n + 1)}>Päivitä lista</button>
       {loading && <p role="status">Ladataan historiaa…</p>}
       {error && <p role="alert">{error} <button onClick={() => setAttempt(n => n + 1)}>Yritä uudelleen</button></p>}
       {!loading && !error && researches.length === 0 && <p>Ei vielä tutkimuksia.</p>}
@@ -62,7 +65,11 @@ function History({ user }) {
       )}
 
       {/* 🔥 LISTA */}
-      {researches.map((r) => (
+      {[{ title: "Valmiit raportit · uusimmat ensin", items: completed },
+        { title: "Keskeneräiset tutkimukset ja osatulokset", items: unfinished }].map(group => group.items.length > 0 && (
+        <section key={group.title} aria-label={group.title}>
+          <h2>{group.title}</h2>
+          {group.items.map((r) => (
         <motion.div
           key={r.id}
           style={styles.card}
@@ -75,6 +82,8 @@ function History({ user }) {
             Klikkaa avataksesi →
           </p>
         </motion.div>
+          ))}
+        </section>
       ))}
     </div>
   );

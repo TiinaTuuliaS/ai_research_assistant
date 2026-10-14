@@ -371,14 +371,28 @@ class AuthenticationTests(unittest.TestCase):
             self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 429)
             generate.assert_not_called()
 
-    def test_failed_attempts_count_but_invalid_requests_do_not(self):
+    def test_failed_attempts_without_results_are_refunded(self):
         self.register_login()
         self.client.post("/research-jobs", json={"topic": ""})
         self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
         with patch.object(api, "generate_report", side_effect=ValueError("failure")):
             self.client.post("/research-jobs", json={"topic": "Market"})
             self.client.post("/research", json={"topic": "Market"})
-        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 1)
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
+
+    def test_limited_report_is_saved_and_readable_in_history(self):
+        self.register_login()
+        from src.ai_research_assistant.report_fallback import compose_fallback
+        sources = {"https://example.test/": {"title": "Palvelut", "research_findings": [
+            {"summary": "Tarjontaa löytyi.", "source": "https://example.test/", "limitations": ["Kysyntä ei selviä."]}]}}
+        report = compose_fallback({"research_type": "demand"}, sources, [])
+        with patch.object(api, "generate_report", return_value=report):
+            started = self.client.post("/research-jobs", json={"topic": "Test"}).json()
+        saved = self.client.get(f"/research-jobs/{started['id']}").json()
+        self.assertEqual(saved["status"], "completed")
+        self.assertEqual(saved["result"], report)
+        self.assertEqual(self.client.get("/researches").json()[0]["result"], report)
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 2)
 
     def test_legacy_attempts_imported_once_without_double_counting(self):
         owner = self.register_login().json()["user_id"]

@@ -21,7 +21,8 @@ class CitationTests(unittest.TestCase):
         valid, report = validate_citations(self.report, self.sources)
         self.assertTrue(valid)
         self.assertIn("Haettu 2026-09-25", report)
-        self.assertIn("hakutuloskatkelmiin", report)
+        self.assertIn("hakutuloskatkelmia", report)
+        self.assertIn("Kartoitus ei ole kattava", report)
 
     def test_rejects_fabricated_sources(self):
         self.assertFalse(validate_citations(self.report.replace("two.test", "invented.test"), self.sources)[0])
@@ -67,11 +68,19 @@ class CitationTests(unittest.TestCase):
         first = SourceSearchTool()
         second = SourceSearchTool()
         result = {"organic": [{"title": "Report", "link": "https://one.test/a(b)", "snippet": "Evidence"}]}
-        with patch.object(SourceSearchTool, "_make_api_request", return_value=result):
+        with patch.object(SourceSearchTool, "_make_api_request", return_value=result), \
+             patch("src.ai_research_assistant.tools.search_tool.read_page", return_value={"page_status": "unavailable"}):
             output = first._run(search_query="market")
         self.assertIn("https://one.test/a%28b%29", first.sources)
         self.assertEqual(output["citation_sources"][0]["snippet"], "Evidence")
         self.assertEqual(second.sources, {})
+
+    def test_citations_distinguish_page_text_from_snippets(self):
+        self.sources["https://one.test/report"].update(page_status="retrieved", page_text="Source text")
+        valid, report = validate_citations(self.report, self.sources)
+        self.assertTrue(valid)
+        self.assertIn("Sivulta poimittu rajattu teksti", report)
+        self.assertIn("Vain hakutuloskatkelma", report)
 
 
 if __name__ == "__main__":

@@ -14,6 +14,23 @@ const reports = [{ id: 1, topic: "Market report", result: "Report content" }];
 
 beforeEach(() => { jest.clearAllMocks(); localStorage.clear(); });
 
+test("shows newest completed reports before older unfinished jobs and can refresh", async () => {
+  api.mockResolvedValueOnce([
+    { id: "job-old", topic: "Old failed research", status: "failed", steps: [] },
+    { id: 19, topic: "Spinning demand", status: "completed", result: "Demand report" },
+    { id: 20, topic: "Spinning competition", status: "completed", result: "Competition report" },
+  ]).mockResolvedValueOnce([{ id: 21, topic: "Newest report", status: "completed", result: "New" }]);
+  render(<MemoryRouter><History user={{ user_id: 2 }} /></MemoryRouter>);
+  await screen.findByText("Spinning competition");
+  expect(screen.getAllByRole("heading", { level: 3 }).map(node => node.textContent)).toEqual([
+    "Spinning competition", "Spinning demand", "Old failed research",
+  ]);
+  fireEvent.click(screen.getByRole("button", { name: "Päivitä lista" }));
+  await screen.findByText("Newest report");
+  expect(api).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText("Old failed research")).not.toBeInTheDocument();
+});
+
 test("fetches once across renders and report selection", async () => {
   api.mockResolvedValue(reports);
   const view = render(<MemoryRouter><History user={{ user_id: 1 }} /></MemoryRouter>);

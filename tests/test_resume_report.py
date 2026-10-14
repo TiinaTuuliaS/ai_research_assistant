@@ -11,6 +11,8 @@ class ResumeReportTests(unittest.TestCase):
         calls, progress, checkpoints = [], [], []
         sources = {url: {"title": "Source", "retrieved": "2026-10-07", "snippet": "Observed offering"}
                    for url in ("https://one.test/", "https://two.test/")}
+        sources["https://one.test/"]["research_findings"] = [
+            {"finding_id": "F1", "evidence_kind": "offering", "limitations": ["Demand unknown"]}]
         steps = new_steps()
         for step in steps[:4]:
             step.update(status="completed", output="Stored finding {literal braces}")
@@ -20,7 +22,7 @@ class ResumeReportTests(unittest.TestCase):
                                        ReportEdit(original="Finding two.", replacement="Finding two [Two](https://two.test/).")]).model_dump_json()
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \
              patch.object(Agent, "execute_task", execute), \
-             patch("src.ai_research_assistant.crew.review_output", side_effect=lambda raw, **kwargs: (True, raw)), \
+             patch("src.ai_research_assistant.crew.review_output", side_effect=lambda raw, **kwargs: (True, raw)) as review, \
              patch("src.ai_research_assistant.tools.search_tool.SourceSearchTool._run") as search:
             result = resume_report({"topic": "Test", "language": "suomi", "current_year": "2026"}, sources, steps,
                                    lambda *args: progress.append(args), lambda **kwargs: checkpoints.append(kwargs),
@@ -28,6 +30,9 @@ class ResumeReportTests(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertIn("Stored finding {literal braces}", calls[0].description)
         self.assertIn("https://one.test/", calls[0].description)
+        self.assertIn("Demand unknown", calls[0].description)
+        self.assertTrue(review.call_args.kwargs["final_report"])
+        self.assertEqual(review.call_args.kwargs["sources"]["https://one.test/"]["research_findings"][0]["finding_id"], "F1")
         self.assertIn("Retrieved 2026-10-07", result)
         self.assertIn("Keep this conclusion.", result)
         self.assertIn("Missing inline citations", calls[0].description)
