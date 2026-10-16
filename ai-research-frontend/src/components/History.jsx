@@ -6,6 +6,16 @@ import PartialResults from "./PartialResults";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
 
+function ResearchDate({ value }) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return <p>Tutkimuspäivämäärää ei ole tallennettu.</p>;
+  }
+  return <p>Tutkimus aloitettu: <time dateTime={value}>{date.toLocaleString("fi-FI", {
+    day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
+  })}</time></p>;
+}
+
 function History({ user }) {
   const [researches, setResearches] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -57,6 +67,7 @@ function History({ user }) {
       {selected && (
         <div style={styles.selectedCard}>
           <h2>📄 {selected.topic}</h2>
+          <ResearchDate value={selected.created_at} />
           {selected.status && selected.status !== "completed"
             ? <PartialResults key={selected.id} initialJob={selected} />
             : <><ReportActions key={selected.id} topic={selected.topic} result={selected.result} steps={selected.steps} />
@@ -77,6 +88,7 @@ function History({ user }) {
           onClick={() => setSelected(r)}
           >
           <h3>{r.topic}</h3>
+          <ResearchDate value={r.created_at} />
           {r.status && r.status !== "completed" && <p>{r.status === "failed" ? "Osatulokset · loppuraportti kesken" : "Tutkimus käynnissä"}</p>}
           <p style={{ color: "var(--accent)" }}>
             Klikkaa avataksesi →

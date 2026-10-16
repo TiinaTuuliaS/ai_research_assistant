@@ -14,6 +14,21 @@ const reports = [{ id: 1, topic: "Market report", result: "Report content" }];
 
 beforeEach(() => { jest.clearAllMocks(); localStorage.clear(); });
 
+test("shows research date in list and opened report without inventing legacy dates", async () => {
+  const createdAt = "2026-10-15T09:30:00+00:00";
+  api.mockResolvedValue([
+    { id: 2, topic: "Dated report", result: "Content", created_at: createdAt },
+    { id: 1, topic: "Legacy report", result: "Old", created_at: null },
+  ]);
+  render(<MemoryRouter><History user={{ user_id: 1 }} /></MemoryRouter>);
+  await screen.findByText("Dated report");
+  expect(document.querySelector("time")).toHaveAttribute("datetime", createdAt);
+  expect(document.querySelector("time")).toHaveTextContent("15.10.2026");
+  expect(screen.getByText("Tutkimuspäivämäärää ei ole tallennettu.")).toBeInTheDocument();
+  fireEvent.click(screen.getByText("Dated report"));
+  expect(document.querySelectorAll("time")).toHaveLength(2);
+});
+
 test("shows newest completed reports before older unfinished jobs and can refresh", async () => {
   api.mockResolvedValueOnce([
     { id: "job-old", topic: "Old failed research", status: "failed", steps: [] },

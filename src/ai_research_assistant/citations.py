@@ -50,7 +50,8 @@ def _validate_citations(raw: str, sources: dict[str, dict[str, str]], *, require
             current_url = None
     if require_evidence_notes:
         evidence_heading = "## Näytön vahvuus ja puutteet" if finnish else "## Evidence strength and gaps"
-        if evidence_heading not in body:
+        evidence_title = "Näytön vahvuus ja puutteet" if finnish else "Evidence strength and gaps"
+        if not re.search(r"^#{1,6}\s+" + re.escape(evidence_title) + r"\s*:?\s*$", body, re.MULTILINE):
             body += (f"\n\n{evidence_heading}\n\n"
                      + ("Raportista puuttuu erillinen näytön arviointi. Päätelmien vahvuutta ei ole vahvistettu."
                         if finnish else "The report lacks a separate evidence assessment. The strength of its conclusions has not been established."))

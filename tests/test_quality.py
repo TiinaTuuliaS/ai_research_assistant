@@ -18,10 +18,12 @@ class QualityTests(unittest.TestCase):
                 tool._run(search_query="international developments")
             self.assertEqual(search.call_count, 6)
 
-    def test_reviewer_receives_page_evidence_and_can_limit_provider_count(self):
+    def test_reviewer_receives_accepted_evidence_and_can_limit_provider_count(self):
         import json
         source = {"url": "https://example.test/services", "snippet": "Indoor cycling",
-                  "page_status": "retrieved", "page_text": "Tampereen toimipiste: sisäpyöräily tiistaisin."}
+                  "page_status": "retrieved", "page_text": "Tampereen toimipiste: sisäpyöräily tiistaisin.",
+                  "research_findings": [{"summary": "Tampereella järjestetään sisäpyöräilyä.",
+                                         "supporting_text": "Tampereen toimipiste: sisäpyöräily tiistaisin."}]}
         reviewer = Mock()
         reviewer.call.return_value = QualityReview(issues=[ReviewIssue(
             excerpt="Tampereella on vain kaksi spinning-salia.",
@@ -33,7 +35,9 @@ class QualityTests(unittest.TestCase):
         self.assertNotIn("vain kaksi", result)
         self.assertIn("Kartoitus ei ole kattava", result)
         messages = reviewer.call.call_args.args[0]
-        self.assertEqual(json.loads(messages[1]["content"])["retrieved_evidence"][0]["page_text"], source["page_text"])
+        payload = json.loads(messages[1]["content"])
+        self.assertNotIn("page_text", payload["retrieved_evidence"][0])
+        self.assertEqual(payload["original_findings"], source["research_findings"])
         self.assertIn("total-provider counts", messages[0]["content"])
 
     def test_competition_review_preserves_evidence_when_correcting_recommendation(self):
@@ -42,7 +46,7 @@ class QualityTests(unittest.TestCase):
         evidence = "Kilpailija tarjoaa vegaanisen buffetin [Menu](https://example.test/menu)."
         claim = "Erotut vegaanisella buffetilla."
         correction = "Vegaaninen buffet vastaisi nykyiseen kilpailuun; eroa ei ole vielä osoitettu."
-        sources = {"https://example.test/menu": {"snippet": "Vegaaninen buffet"}}
+        sources = {"https://example.test/menu": {"research_findings": [{"summary": "Vegaaninen buffet"}]}}
         reviewer = Mock()
         reviewer.call.return_value = QualityReview(issues=[ReviewIssue(excerpt=claim, correction=correction)])
         ok, result = review_output(evidence + "\n" + claim, sources=sources,
@@ -52,7 +56,7 @@ class QualityTests(unittest.TestCase):
         self.assertIn(correction, result)
         messages = reviewer.call.call_args.args[0]
         self.assertIn(COMPETITION_REVIEW_RULES, messages[0]["content"])
-        self.assertEqual(json.loads(messages[1]["content"])["retrieved_evidence"], list(sources.values()))
+        self.assertEqual(json.loads(messages[1]["content"])["original_findings"], sources["https://example.test/menu"]["research_findings"])
 
     def test_competition_rules_are_scoped_and_honest_proposals_can_pass(self):
         reviewer = Mock()
@@ -66,7 +70,8 @@ class QualityTests(unittest.TestCase):
                 self.assertEqual(COMPETITION_REVIEW_RULES in prompt, mode == "competition")
 
     def test_reviewer_receives_original_evidence_and_corrects_material_issues(self):
-        sources = {"https://example.test/menu": {"url": "https://example.test/menu", "snippet": "Lounas 12 euroa"}}
+        sources = {"https://example.test/menu": {"url": "https://example.test/menu",
+            "research_findings": [{"summary": "Lounas 12 euroa", "evidence_kind": "price"}]}}
         reviewer = Mock()
         reviewer.call.return_value = QualityReview(issues=[ReviewIssue(
             excerpt="Asiakkaat maksavat mielellään 12 euroa.",

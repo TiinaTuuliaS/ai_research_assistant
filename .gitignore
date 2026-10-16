@@ -6,5 +6,6 @@ __pycache__/
 *.db-*
 *.sqlite*
 .runtime/
+.crewai/
 ai-research-frontend/node_modules/
 ai-research-frontend/build/

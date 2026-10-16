@@ -13,6 +13,9 @@ Jos uusi tutkimus epäonnistuu ennen luettavien osatulosten syntymistä, käytt�
 palautetaan. Aiemmat tutkimukset lasketaan mukaan. Raja tarkistetaan palvelimella,
 ja jäljellä olevat kerrat näkyvät lomakkeessa.
 Omia raportteja voi katsella rajan täytyttyäkin.
+Uusien tutkimusten aloitusaika näkyy raporttilistassa ja avatussa raportissa.
+Aika tallennetaan UTC-muodossa ja näytetään selaimen paikallisessa ajassa.
+Vanhoissa raporteissa päivämäärä voi puuttua.
 
 Keskeytyneen tutkimuksen valmistuneet osatulokset näkyvät myös omissa raporteissa.
 Jos AI-kirjoittaja tai myöhempi vaihe epäonnistuu mutta tarkistettuja tuloksia on,
@@ -42,7 +45,7 @@ Rajattomuus ei anna pääsyä muiden käyttäjien raportteihin.
 
 - **React ja JavaScript** – käyttöliittymä, React Router – sivujen reititys.
 - **Python ja FastAPI** – backend ja REST-rajapinta.
-- **CrewAI ja OpenAI (GPT-4.1 mini)** – agenttien yhteistyö ja raporttien tuottaminen.
+- **CrewAI 1.15.28 ja OpenAI (GPT-4.1 mini)** – agenttien yhteistyö ja raporttien tuottaminen.
 - **Serper** – verkkohaku tutkimusten lähteitä varten.
 - **SQLite ja SQLAlchemy** – käyttäjien ja raporttien tallennus.
 - **CSS ja Framer Motion** – ulkoasu ja animaatiot.
@@ -168,6 +171,15 @@ ja tarkistuksen perustelu säilyvät erikseen tutkimuksen yksityisissä jatkamis
 Tarkistukset ja korjausyritykset lisäävät AI-kutsuja. Vanhoja raportteja ei muuteta.
 Mallin voi vaihtaa palvelimen `RESEARCH_MODEL`-asetuksella; oletus on
 `openai/gpt-4.1-mini`. Mallinvaihto vaikuttaa laatuun ja tokenien hintaan.
+
+Havaintojen lähdetuki tarkistetaan erillään liiketoimintakysymyksestä: oikea
+tarjontahavainto voi säilyä, vaikka se ei osoita maksavaa kysyntää. Virheellinen
+tukikatkelma voidaan korjata kerran saman lähteen tallennetusta tekstistä sekä
+tutkija- että trendivaiheessa; korjattu havainto tarkistetaan edelleen.
+Tämä voi lisätä enintään yhden AI-kutsun kumpaankin vaiheeseen. Myös trendin
+sisällön rajattua korjausta voidaan yrittää kerran ja tarkistaa uudelleen.
+Myöhempien agenttien sisältötarkistus saa hyväksytyt havainnot tukiteksteineen,
+ei koko hakuaineistoa. Havaintojen puuttuminen ei osoita tiedon puuttumista maailmasta.
 
 Oikeita tuotoksia voi arvioida komennolla `uv run python -m scripts.evaluate_reports demand`
 (vaihtoehdot: `demand`, `competition`, `market`). Tämä käyttää API-krediittejä ja

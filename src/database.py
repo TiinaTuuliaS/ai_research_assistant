@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = os.getenv(
@@ -22,6 +22,15 @@ if DATABASE_URL.startswith("sqlite:"):
     def configure_sqlite(connection, _):
         connection.execute("PRAGMA secure_delete=ON")
         connection.execute("PRAGMA foreign_keys=ON")
+
+
+def migrate_research_dates(bind):
+    """Add nullable UTC timestamps without inventing dates for legacy rows."""
+    with bind.begin() as connection:
+        for table in ("researches", "research_jobs"):
+            columns = {column["name"] for column in inspect(connection).get_columns(table)}
+            if "created_at" not in columns:
+                connection.execute(text(f"ALTER TABLE {table} ADD COLUMN created_at VARCHAR"))
 
 
 def get_db():

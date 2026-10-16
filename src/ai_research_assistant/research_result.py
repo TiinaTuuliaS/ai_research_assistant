@@ -44,6 +44,10 @@ class ResearchFinding(BaseModel):
     @classmethod
     def validate_source(cls, value):
         from .source_registry import SOURCE_ID
+        if isinstance(value, str):
+            value = value.strip()
+            if value.startswith('[') and value.endswith(']') and SOURCE_ID.fullmatch(value[1:-1]):
+                value = value[1:-1]
         if isinstance(value, str) and SOURCE_ID.fullmatch(value):
             return value
         return str(HttpUrl(value))  # Compatibility for saved URL-based findings.

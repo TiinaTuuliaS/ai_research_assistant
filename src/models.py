@@ -1,5 +1,10 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, JSON
 from .database import Base
+from datetime import datetime, timezone
+
+
+def utc_created_at():
+    return datetime.now(timezone.utc).isoformat()
 
 class Research(Base):
     __tablename__ = "researches"
@@ -8,6 +13,7 @@ class Research(Base):
     topic = Column(String)
     result = Column(Text)
     user_id = Column(Integer)
+    created_at = Column(String().evaluates_none(), nullable=True, default=utc_created_at)
 
 class User(Base):
     __tablename__ = "users"
@@ -40,6 +46,7 @@ class ResearchJob(Base):
     research_id = Column(Integer, ForeignKey("researches.id"), unique=True)
     topic = Column(String, nullable=False)
     status = Column(String, nullable=False, default="queued")
+    created_at = Column(String().evaluates_none(), nullable=True, default=utc_created_at)
     steps = Column(JSON, nullable=False)
     error = Column(Text)
 

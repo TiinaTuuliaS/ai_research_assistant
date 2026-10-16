@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 from pydantic import HttpUrl
 
 SOURCE_ID = re.compile(r"S[1-9][0-9]*")
-REFERENCE = re.compile(r"\[(S[1-9][0-9]*)\](?!\()")
+REFERENCE = re.compile(r"\[(S[1-9][0-9]*(?:\s*[,;]\s*S[1-9][0-9]*)*)\](?!\()")
 
 
 def iso_date(value):
@@ -59,7 +59,7 @@ def render_references(text, sources, language='suomi'):
     """Resolve registered [S1] tokens; never guess a mistyped URL or source ID."""
     register_sources(sources)
     by_id = {s['source_id']: url for url, s in sources.items()}
-    unknown = set(REFERENCE.findall(text)) - by_id.keys()
+    unknown = {sid for group in REFERENCE.findall(text) for sid in SOURCE_ID.findall(group)} - by_id.keys()
     if unknown:
         raise ValueError('Unknown source IDs: ' + ', '.join(sorted(unknown)))
     # Old stage text can contain bare URLs. Check those as well so a typo
@@ -69,7 +69,8 @@ def render_references(text, sources, language='suomi'):
         if resolve_source(url.rstrip('.,;'), sources) is None:
             raise ValueError('Unregistered source URL')
     label = 'Lähde' if language != 'english' else 'Source'
-    return REFERENCE.sub(lambda m: f'[{label} {m[1]}]({by_id[m[1]]})', text)
+    return REFERENCE.sub(lambda m: ' '.join(f'[{label} {sid}]({by_id[sid]})'
+                         for sid in dict.fromkeys(SOURCE_ID.findall(m[1]))), text)
 
 
 def unsupported_years(finding):

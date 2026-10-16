@@ -17,8 +17,10 @@ class ReportRetryTests(unittest.TestCase):
                    side_effect=lambda raw, **kwargs: (True, raw.replace("Unsupported claim", "Evidence is limited"))):
             assistant = AiResearchAssistant()
             assistant.search_tool.sources.update({
-                "https://one.test/menu": {"title": "One", "snippet": "Hinta 12 euroa", "retrieved": "2026-10-07"},
-                "https://two.test/products": {"title": "Two", "snippet": "Valikoimassa takkeja", "retrieved": "2026-10-07"},
+                "https://one.test/menu": {"title": "One", "snippet": "Hinta 12 euroa", "retrieved": "2026-10-07",
+                    "research_findings": [{"summary": "Hinta 12 euroa", "supporting_text": "Hinta 12 euroa"}]},
+                "https://two.test/products": {"title": "Two", "snippet": "Valikoimassa takkeja", "retrieved": "2026-10-07",
+                    "research_findings": [{"summary": "Valikoimassa takkeja", "supporting_text": "Valikoimassa takkeja"}]},
             })
 
             def execute(agent, task, context=None, tools=None):
@@ -60,3 +62,16 @@ class ReportRetryTests(unittest.TestCase):
             self.assertFalse(valid)
             self.assertIn("at least two", feedback)
             self.assertIn('"retrieved_evidence": []', feedback)
+
+    def test_second_content_review_correction_becomes_retry_draft(self):
+        from crewai.tasks.task_output import TaskOutput
+        corrected = "Rajattu havainto."
+        feedback = "The repaired report still contained unsupported conclusions. Use this further corrected draft, preserving its limits:\n" + corrected
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \
+             patch("src.ai_research_assistant.crew.review_output", return_value=(False, feedback)):
+            assistant = AiResearchAssistant()
+            output = TaskOutput(description="Report", agent="Writer", raw="Alkuperäinen väärä väite.")
+            valid, retry = assistant.check_sources(output)
+            self.assertFalse(valid)
+            self.assertEqual(output.raw, corrected)
+            self.assertNotIn("Alkuperäinen väärä väite", retry)

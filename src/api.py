@@ -24,8 +24,8 @@ for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="backslashreplace")
 logger = logging.getLogger(__name__)
 
-from .database import SessionLocal, engine, get_db
-from .models import Base, LoginSession, Research, ResearchJob, ResearchRecovery, ResearchUsage, User
+from .database import SessionLocal, engine, get_db, migrate_research_dates
+from .models import Base, LoginSession, Research, ResearchJob, ResearchRecovery, ResearchUsage, User, utc_created_at
 from .partial_results import partial_report
 from .diagnostics import record_failure
 from .security import hash_password, is_password_hash, token_hash, verify_password
@@ -66,6 +66,7 @@ def migrate_passwords(db: Session):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    migrate_research_dates(engine)
     with SessionLocal() as db:
         migrate_passwords(db)
         for job in db.query(ResearchJob).filter(ResearchJob.status.in_(["queued", "running"])):
@@ -369,6 +370,7 @@ def job_payload(job, db):
     entry = db.get(Research, job.research_id) if job.research_id else None
     saved = db.get(ResearchRecovery, job.id)
     return {"id": job.id, "topic": job.topic, "status": job.status,
+            "created_at": job.created_at,
             "steps": job.steps, "error": job.error,
             "result": entry.result if entry else "", "research_id": job.research_id,
             "partial_result": partial_report(job.steps) if job.status != "completed" else "",
@@ -418,7 +420,7 @@ def run_job(job_id, data, session_hash, retry=False):
             session = db.get(LoginSession, session_hash)
             if not session or session.user_id != job.user_id or session.expires_at <= int(time.time()):
                 raise PermissionError("Session expired")
-            entry = Research(topic=job.topic, result=result, user_id=job.user_id)
+            entry = Research(topic=job.topic, result=result, user_id=job.user_id, created_at=job.created_at)
             db.add(entry)
             db.flush()
             job.research_id = entry.id
@@ -514,6 +516,7 @@ def retry_report(job_id: str, request: Request, background: BackgroundTasks,
 @app.post("/research")
 def research(data: ResearchRequest, request: Request,
              user: User = Depends(current_user), db: Session = Depends(get_db)):
+    started_at = utc_created_at()
     owner_id = user.id
     with job_lock:
         reserve_research(db, owner_id)
@@ -532,10 +535,10 @@ def research(data: ResearchRequest, request: Request,
         raise HTTPException(502, "Tutkimus tai lähteiden tarkistus epäonnistui. Yritä uudelleen.") from None
     db.expire_all()
     current_user(request, db)
-    entry = Research(topic=data.topic, result=result, user_id=owner_id)
+    entry = Research(topic=data.topic, result=result, user_id=owner_id, created_at=started_at)
     db.add(entry)
     db.commit()
-    return {"id": entry.id, "topic": entry.topic, "result": entry.result}
+    return {"id": entry.id, "topic": entry.topic, "result": entry.result, "created_at": entry.created_at}
 
 
 @app.get("/researches")
@@ -544,6 +547,7 @@ def get_researches(user: User = Depends(current_user), db: Session = Depends(get
         ResearchJob, ResearchJob.research_id == Research.id
     ).filter(Research.user_id == user.id).order_by(Research.id.desc()).all()
     completed = [{"id": r.id, "topic": r.topic, "result": r.result, "status": "completed",
+                  "created_at": job.created_at if job else r.created_at,
                   "steps": job.steps if job else []} for r, job in rows]
     unfinished = db.query(ResearchJob).filter(ResearchJob.user_id == user.id,
                                               ResearchJob.research_id.is_(None)).all()

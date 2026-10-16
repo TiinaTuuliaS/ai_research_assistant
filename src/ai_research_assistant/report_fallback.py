@@ -1,6 +1,6 @@
 """Compose a clearly limited report from accepted outputs, never rejected drafts."""
 import re
-from .evidence import evidence_ledger
+from .evidence import evidence_ledger, accepted_sources
 from .citations import LINK
 from .quality import remove_editor_instructions
 from .trend_result import attach_trend_evidence
@@ -30,7 +30,9 @@ def compose_fallback(brief, sources, accepted):
                 ("**Rajattu raportti:** viimeistely ei onnistunut. Tämä kooste sisältää vain valmistuneet, tarkistetut tulokset. "
                  "Puuttuva analyysi ei tarkoita kielteistä arviota ideasta."
                  if fi else "**Limited report:** final synthesis failed. This compilation contains only completed, reviewed results. Missing analysis is not evidence against the idea."),
-                "## " + ("Ratkaisevat havainnot" if fi else "Key findings")]
+                ]
+    if findings:
+        sections.append("## " + ("Ratkaisevat havainnot" if fi else "Key findings"))
     # Summaries are the researcher's reviewed paraphrases. Never publish source_passage/page_text.
     for finding in findings[:6]:
         sections.append(f"- {finding['summary']} [" + ("Lähde" if fi else "Source") + f"]({finding['source']})")
@@ -40,8 +42,8 @@ def compose_fallback(brief, sources, accepted):
         sections.append(stages["trend_task"])
     limits = list(dict.fromkeys(limit for finding in findings for limit in finding.get("limitations", [])))
     sections.extend(["## " + ("Näytön vahvuus ja puutteet" if fi else "Evidence strength and gaps"),
-                     " ".join(limits[:5]) or ("Kaikki analyysivaiheet eivät valmistuneet. Johtopäätös on rajattu käytettävissä olevaan aineistoon."
-                         if fi else "Not all analysis stages completed. The conclusion is limited to the available evidence.")])
+                     " ".join(limits[:5]) or ("Loppuraportin viimeistely ei onnistunut. Tämä kooste ei korvaa kattavaa tutkimusta; päätelmä on rajattu tallennettuun aineistoon."
+                         if fi else "Final synthesis did not succeed. This compilation is limited to the saved evidence and does not replace a comprehensive study.")])
     body = remove_editor_instructions("\n\n".join(sections))
     body = attach_trend_evidence(body, sources, brief.get("language", "suomi"))
     try:
@@ -62,6 +64,9 @@ def compose_fallback(brief, sources, accepted):
                 return None
             body = body.replace(f"]({url})", f"]({original})")
     urls = list(dict.fromkeys(url for _, url in LINK.findall(body)))
+    if any("research_findings" in source or "trend_findings" in source for source in sources.values()):
+        if set(urls) - accepted_sources(sources).keys():
+            return None
     if not urls:
         return None
     return body + "\n\n## " + ("Lähteet" if fi else "Sources") + "\n\n" + "\n".join(

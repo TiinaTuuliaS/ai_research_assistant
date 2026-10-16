@@ -27,6 +27,13 @@ class CitationTests(unittest.TestCase):
     def test_rejects_fabricated_sources(self):
         self.assertFalse(validate_citations(self.report.replace("two.test", "invented.test"), self.sources)[0])
 
+    def test_evidence_section_accepts_other_markdown_heading_levels(self):
+        for level in ("#", "###"):
+            report = self.report.replace("## Katsaus", level + " Näytön vahvuus ja puutteet")
+            valid, result = validate_citations(report, self.sources, require_evidence_notes=True)
+            self.assertTrue(valid)
+            self.assertNotIn("Raportista puuttuu erillinen", result)
+
     def test_evidence_notes_are_required_and_preserved(self):
         valid, incomplete = validate_citations(self.report, self.sources, require_evidence_notes=True)
         self.assertTrue(valid)

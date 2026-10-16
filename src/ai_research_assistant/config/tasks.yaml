@@ -108,6 +108,10 @@ analysis_task:
     {quality_rules}
     Aihe: {topic}. Kysymys: {goal}. Alue ja asiakkaat: {target_market}.
     Tehtäväsi: {analysis_task_deliverable}
+    Arvioinnin kohde on käyttäjän suunnitelma: {topic}. Lähteissä nimetyt yritykset
+    ovat ulkopuolisia vertailukohteita, eivät käyttäjän yritys. Älä vaihda arvioinnin
+    kohteeksi parhaiten dokumentoitua kilpailijaa. Kirjaa kilpailijan jo tarjoama
+    ominaisuus yhteiseksi ominaisuudeksi, älä käyttäjän kilpailueduksi.
     Tarkista erityisesti aiempien agenttien päättelyvirheet. Toisen agentin
     vakuuttava sanavalinta ei vahvista väitettä. Jos lähde ei osoita väitettä,
     kirjoita sen tilalle aineiston sallima johtopäätös. Älä julkaise aiempien agenttien
@@ -136,6 +140,8 @@ strategy_task:
     {quality_rules}
     Aihe: {topic}. Kysymys: {goal}. Alue ja asiakkaat: {target_market}.
     Budjetti: {budget}. Tehtäväsi: {strategy_task_deliverable}
+    Suositus koskee käyttäjän suunnitelmaa {topic}, ei lähteissä nimetyn kilpailijan
+    kehittämistä. Nimeä vertailuyritys kilpailijaksi ja erota käyttäjän ehdotus sen tarjonnasta.
     Perusta ehdotuksesi analyytikon hyväksymiin havaintoihin ja epävarmuuksiin.
     Älä palauta hylättyjä väitteitä perusteluiksi. Suositus ei ole lähteestä
     saatu tosiasia. Älä keksi lukuja, nimeä yritykselle tai uutta asiakastarvetta.
@@ -173,7 +179,7 @@ report_task:
     Älä kopioi agenttien tekstejä peräkkäin tai lisää uusia faktaväitteitä.
     Poista analyytikon hylkäämät päätelmät. Älä korvaa niitä uusilla oletuksilla.
     Tarkista aloitusvastaus ja jokainen keskeinen johtopäätös alkuperäisistä
-    havainnoista tai uuden lähteen tekstikohdasta, ei pelkästään agenttien
+    hyväksytyistä havainnoista, ei uudesta hakukatkelmasta tai pelkästään agenttien
     yhteenvedoista. Säilytä tiedon tyyppi, alue, ajankohta ja rajaukset.
     Kun käytät trendin väitettä tai lukua, liitä sama tarkka lähdelinkki väitteen viereen.
     Säilytä ero ennusteen, havaitun muutoksen ja yksittäisen esimerkin välillä.

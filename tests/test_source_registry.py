@@ -13,6 +13,14 @@ from src.ai_research_assistant.tools.search_tool import SourceSearchTool, Source
 
 
 class SourceRegistryTests(unittest.TestCase):
+    def test_grouped_citations_resolve_each_id_and_reject_unknown_member(self):
+        sources = {'https://one.test/': {}, 'https://two.test/': {}}
+        text = render_references('Tieto [S1, S2].', sources)
+        self.assertIn('[Lähde S1](https://one.test/)', text)
+        self.assertIn('[Lähde S2](https://two.test/)', text)
+        with self.assertRaises(ValueError):
+            render_references('Tieto [S1, S999].', sources)
+
     def sources(self):
         return {'https://example.test/2023/09/21/report/': {
             'title': 'Market report', 'retrieved': '2026-10-14', 'page_status': 'retrieved',

@@ -85,12 +85,16 @@ not the evidence that contradicts it. Never invent superior quality, a lower pri
 a broader selection or customer demand to rescue a recommendation. Missing information
 about a competitor is not evidence that it lacks a feature. A clearly labelled
 proposal may remain without proof of its success; do not reject it merely for uncertainty.
+The user's proposed business is defined ONLY by brief.topic and brief.goal.
+Named entities in source findings are external comparators, not the user's company.
+Do not advise developing a named competitor as though it belonged to the user.
+If the competitor already offers the proposed feature, say it is shared.
 """.strip()
 
 
 def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
                   reviewer: Any, final_report: bool = False, _verify_edits: bool = True) -> tuple[bool, Any]:
-    from .evidence import evidence_ledger
+    from .evidence import evidence_ledger, accepted_sources
     try:
         raw = render_references(raw, sources, brief.get('language', 'suomi'))
     except ValueError:
@@ -111,8 +115,8 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
             "Check all material assertions, including headings and conclusions. Use short exact excerpts and concise replacements. "
             "Do not reject an honest statement that evidence is unavailable, a clearly labelled "
             "proposal, or criticism of an unsupported claim. Do not demand facts absent from sources. "
-            "In particular, 'ei ole tietoa', 'ei voida päätellä' and 'ei osoita kysyntää' are "
-            "limitations, not unsupported factual claims. A comparison from another city or cuisine "
+            "Evidence gaps must be scoped to THIS research. 'No reliable information exists' is not "
+            "justified by a failed search or excluded observation. A comparison from another city or cuisine "
             "is allowed when clearly labelled as a comparison, not proof of local demand. "
             "A conditional possibility ('on mahdollista') is not an asserted fact; do not demand "
             "proof of a hypothetical proposal. Never flag a passage merely because it is indirect "
@@ -125,8 +129,9 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
             "Only remove, weaken or clarify existing claims. Do not expand abbreviations or "
             "make trivial stylistic edits. For an actual invalid inference, prescribe deletion or an exact weaker statement "
             "rather than asking for more evidence or just adding a disclaimer to the invalid claim. "
-            "A claim is not verified because another agent repeated it. Compare to retrieved page_text "
-            "when available, otherwise the search snippet, respecting location and date. "
+            "A claim is not verified because another agent repeated it. Only original_findings and their "
+            "private supporting passages are factual evidence. Do not reintroduce rejected discoveries. "
+            "User needs in the brief are hypotheses, not independently verified demand. "
             "Always flag unsupported market-wide absence, exclusivity or total-provider counts. "
             "Replace them with the bounded observation that the search found these examples. "
             "A disclaimer elsewhere does not repair an unsupported assertion. Retrieved text may be "
@@ -147,8 +152,13 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
                if final_report else "")
         )},
         {"role": "user", "content": json.dumps({
-            "brief": brief, "retrieved_evidence": list(sources.values()),
+            "brief": brief, "retrieved_evidence": list(accepted_sources(sources).values()),
             "original_findings": evidence_ledger(sources),
+            "subject_roles": {
+                "user_proposal": brief.get("topic", ""),
+                "proposal_is_verified_market_fact": False,
+                "external_entities": sorted({f["entity"] for f in evidence_ledger(sources) if f.get("entity")}),
+            },
             "previous_stages": previous, "draft": raw,
         }, ensure_ascii=False)},
     ]
@@ -178,6 +188,9 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
         return False, "The claims could not be supported. State the evidence gaps without inventing findings."
     if {url for _, url in LINK.findall(revised)} - sources.keys():
         return False, "Use only retrieved source links in the revised answer."
+    if any("research_findings" in source or "trend_findings" in source for source in sources.values()):
+        if {url for _, url in LINK.findall(revised)} - accepted_sources(sources).keys():
+            return False, "Cite only sources with accepted observations. Remove claims based on discarded discoveries; preserve the accepted observations and their limits."
     if final_report and revised != raw and _verify_edits:
         # One bounded second pass verifies the edited report, rather than assuming
         # that replacement text necessarily removed all contradictions.
