@@ -1,3 +1,4 @@
+from tests.test_analysis_result import analysis_fixture
 import os
 import unittest
 from unittest.mock import patch
@@ -63,7 +64,7 @@ class FallbackTests(unittest.TestCase):
                 return "REJECTED WRITER DRAFT"
             if task.name == "trend_task":
                 return TrendResult(topic="Test", findings=[])
-            return "Perusteltu ehdollinen näkemys [Lähde](https://example.test/)."
+            return analysis_fixture(mode="demand", ids=["F1"])
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \
              patch.object(Agent, "execute_task", execute), \
              patch("src.ai_research_assistant.crew.assess_findings", side_effect=lambda result, *args: (result, [])), \
@@ -73,6 +74,6 @@ class FallbackTests(unittest.TestCase):
                                      checkpoint=lambda **values: saved.update(values))
         self.assertIn("Rajattu raportti", result)
         self.assertIn("Perusteltu ehdollinen näkemys", result)
-        self.assertTrue(any(i == 4 and state == "completed" and text == result for i, state, text in updates))
+        self.assertTrue(any(i == 2 and state == "completed" and text == result for i, state, text in updates))
         self.assertEqual(saved["draft"], "REJECTED WRITER DRAFT")
         self.assertIn("SCOPE_REJECTION", saved["feedback"])

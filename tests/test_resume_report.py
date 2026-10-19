@@ -14,7 +14,7 @@ class ResumeReportTests(unittest.TestCase):
         sources["https://one.test/"]["research_findings"] = [
             {"finding_id": "F1", "evidence_kind": "offering", "limitations": ["Demand unknown"]}]
         steps = new_steps()
-        for step in steps[:4]:
+        for step in steps[:-1]:
             step.update(status="completed", output="Stored finding {literal braces}")
         def execute(agent, task, context=None, tools=None):
             calls.append(task)
@@ -37,7 +37,7 @@ class ResumeReportTests(unittest.TestCase):
         self.assertIn("Keep this conclusion.", result)
         self.assertIn("Missing inline citations", calls[0].description)
         self.assertIn("Finding one. Finding two.", calls[0].description)
-        self.assertTrue(any(index == 4 and state == "completed" for index, state, _ in progress))
+        self.assertTrue(any(index == len(steps) - 1 and state == "completed" for index, state, _ in progress))
         self.assertTrue(checkpoints)
         search.assert_not_called()
 
@@ -60,7 +60,7 @@ class ResumeReportTests(unittest.TestCase):
         saved = {}
         sources = {"https://one.test/": {"title": "One", "snippet": "Finding", "retrieved": "2026-10-07"}}
         steps = new_steps()
-        for step in steps[:4]:
+        for step in steps[:-1]:
             step.update(status="completed", output="Finding")
         draft = "No inline links.\n\n## Sources\n"
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \

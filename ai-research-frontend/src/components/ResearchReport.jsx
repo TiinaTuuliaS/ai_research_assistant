@@ -1,12 +1,14 @@
 import ReactMarkdown from "react-markdown";
+import { compactCitations, stepText } from "./reportFormatting";
 
 export function reportText(result, steps = []) {
   return [...steps.filter(step => step.key !== "writer" && step.output)
-    .map(step => `## ${step.label}\n\n${step.output}`), `## Yhdistetty loppuraportti\n\n${result}`].join("\n\n");
+    .map(step => `## ${step.label}\n\n${stepText(step.output)}`), `## Yhdistetty loppuraportti\n\n${compactCitations(result)}`].join("\n\n");
 }
 
 export default function ResearchReport({ result, steps = [] }) {
   const perspectives = steps.filter(step => step.key !== "writer" && step.output);
+  result = compactCitations(result);
   const sourceHeading = /^##\s+(?:Lähteet|Sources)\s*$/im.exec(result || "");
   const body = sourceHeading ? result.slice(0, sourceHeading.index) : result;
   const sources = sourceHeading ? result.slice(sourceHeading.index + sourceHeading[0].length) : "";
@@ -16,7 +18,7 @@ export default function ResearchReport({ result, steps = [] }) {
       <p className="muted">Avaa kunkin agentin oma näkökulma. Näkemykset ovat tekoälyn välituloksia, eivät toisistaan riippumattomia asiantuntija-arvioita.</p>
       {perspectives.map(step => <details className="agent-perspective" key={step.key}>
         <summary>{step.label}<span>{step.description}</span></summary>
-        <ReactMarkdown>{step.output}</ReactMarkdown>
+        <ReactMarkdown>{stepText(step.output)}</ReactMarkdown>
       </details>)}
     </> : <p className="muted">Tähän raporttiin ei ole tallennettu agenttikohtaisia näkemyksiä.</p>}
     {body && <section className="final-report"><h2>Yhdistetty loppuraportti</h2><ReactMarkdown>{body}</ReactMarkdown></section>}

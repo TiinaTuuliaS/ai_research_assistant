@@ -1,112 +1,59 @@
 demand:
   research_task: >
-    Selvitä, mitä käyttäjän kuvaamasta tarpeesta ja nykyisestä tarjonnasta tiedetään.
-    Käytä otsikoita "Mitä löytyi" ja "Mitä emme vielä tiedä".
-    Erota asiakkaiden toiminnasta kertovat havainnot yritysten omista lupauksista.
-    Valitse ideaan sopivat vertailukohteet: esimerkiksi palvelu, tuote, ravintola,
-    tapahtuma tai nykyinen toimintatapa. Älä oleta kyseessä olevan ohjelmisto.
-    Mainitse ostot tai toteutunut käyttö vain, jos lähde todella kertoo niistä.
-  trend_task: >
-    Selvitä, onko tähän tarpeeseen liittyvässä käyttäytymisessä tai tarjonnassa
-    havaittu muutoksia. Käytä otsikoita "Muutoksen merkit" ja "Mitä niistä voi päätellä".
-    Aikavertailu vaatii erilliset, ajoitetut havainnot samasta asiasta.
-    Jos niitä ei ole, kuvaa nykytilannetta ja sano, ettei kasvusta voi päätellä mitään.
-    Etsi myös ensimmäisiä havaintoja kyseenalaistavaa tietoa. Älä keksi vastasignaalia.
+    Selvitä ideaan liittyvä tarve, nykyinen tarjonta ja asiakkaiden toiminnasta
+    kertovat havainnot. Erota toteutunut käyttö ja ostot yritysten lupauksista.
+    Etsi kysymyksen kannalta olennaiset vaihtoehdot. Tarjonta ei todista
+    kysyntää, eikä puuttuva kysyntätieto todista kysynnän puuttumista.
   analysis_task: >
-    Arvioi aiempien vaiheiden tärkeimmät väitteet. Käytä otsikoita
-    "Mikä on perusteltua" ja "Mitä aineisto ei osoita".
-    Kerro jokaisesta olennaisesta päätelmästä, mikä havainto sitä tukee ja kuinka
-    pitkälle päätelmä ulottuu. Erota kiinnostus, toteutunut käyttö ja ostaminen.
-    Korjaa perusteettomat päätelmät lähteiden sallimaan muotoon ilman sisäistä agenttien virhelistaa.
-    Älä tulkitse kysyntätiedon puuttumista todisteeksi kysynnän puuttumisesta.
-  strategy_task: >
-    Kerro, mikä päätös on nykyisen tiedon perusteella mahdollinen ja mikä ei.
-    Käytä otsikoita "Mitä tämä tarkoittaa ideallesi" ja "Seuraava päätös".
-    Ehdota tarvittaessa yhtä ideaan sopivaa pientä kokeilua ja kerro, minkä
-    epävarmuuden se selvittäisi. Merkitse ehdotus omaksi suositukseksi.
-    Älä esitä käyttäjän alkuperäistä ideaa uutena löydöksenä, keksi yrityksen nimeä
-    tai kirjoita pitkää tutkimusohjetta. Älä pakota ideaa ongelma/prototyyppi-malliin.
+    Vastaa, millaista näyttöä idean kysynnästä löytyi. Erota suora näyttö,
+    epäsuorat merkit ja avoimet kysymykset. Punnitse ideaa puoltavat ja vastaan
+    puhuvat havainnot. Kerro mitä aineiston perusteella voi päättää ja mitä ei;
+    mahdollinen kokeilu on oma ehdotus, ei lähteestä löydetty tosiasia.
+    Älä keksi asiakastarvetta tai yrityksen nimeä. comparisons on tyhjä lista.
   report_task: >
     Vastaa siihen, millaista näyttöä idean kysynnästä löytyi ja mitä jäi avoimeksi.
     Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset havainnot",
     "Näytön vahvuus ja puutteet", "Mitä kannattaa tehdä seuraavaksi" ja "Lähteet".
-    Erota todettu kysyntä, epäsuorat merkit ja omat ehdotukset. Kerro konkreettisesti,
-    mihin mahdollinen seuraava päätös perustuu. Älä lupaa menestystä tai suosittele
-    idean hylkäämistä vain siksi, ettei verkkohaku löytänyt kysyntätietoa.
+    Erota todettu kysyntä, epäsuorat merkit ja omat ehdotukset. Älä lupaa menestystä
+    tai suosittele hylkäämistä vain siksi, ettei verkkohaku löytänyt kysyntätietoa.
 competition:
   research_task: >
-    Etsi käyttäjän ratkaisulle relevantit, nimetyt vaihtoehdot oikealta alueelta.
-    Käytä otsikoita "Vertailtavat vaihtoehdot" ja "Puuttuvat tiedot".
-    Vertaa samalla perusteella sitä, mitä asiakas saa, kenelle se sopii, missä se on
-    saatavilla ja mikä ilmoitettu hinta on, jos se löytyy. Valitse vertailuperusteet
-    toimialan mukaan: älä vertaa esimerkiksi ravintoloita ohjelmiston ominaisuuksilla.
-    Suosi toimijoiden omia tuote-, palvelu-, hinnasto- tai ruokalistasivuja.
-    Tuntematon hinta tai tarjonta jää tuntemattomaksi. Älä keksi kilpailijoita.
-  trend_task: >
-    Selvitä dokumentoidut muutokset kilpailijoiden tarjonnassa, hinnoissa tai
-    asiakkaiden valintaperusteissa. Käytä otsikoita "Mikä kilpailussa muuttuu" ja
-    "Muutoksen merkitys". Erottele päivätty muutos nykytilan kuvauksesta.
-    Uusi avaus tai tuotejulkaisu ei todista suosiota. Jos muutoksista ei löytynyt
-    vertailukelpoisia tietoja, sano se lyhyesti äläkä täytä osiota oletuksilla.
+    Etsi ratkaisulle nimetyt vaihtoehdot oikealta alueelta sekä olennaiset
+    vertailukohteet muualla. Selvitä mitä asiakas saa, kenelle tarjonta sopii,
+    saatavuus ja ilmoitettu hinta. Sovita vertailuperusteet toimialaan.
+    Suosi toimijoiden alkuperäisiä palvelu-, tuote- ja hinnastosivuja.
+    Etsi myös dokumentoituja muutoksia tarjonnassa ja valintaperusteissa.
+    Tuntematon tieto jää tuntemattomaksi; tuotejulkaisu ei osoita suosiota.
   analysis_task: >
-    Arvioi ehdotettujen erojen todellisuus ja merkitys asiakkaalle. Käytä otsikoita
-    "Todelliset erot" ja "Erot, joita ei vielä voi vahvistaa".
-    Nimeä vertailukohde ja todiste. Erota todettu ominaisuus, oletettu asiakashyöty
-    ja tuntematon asia. Tiedon puuttuminen kilpailijan tarjonnasta ei todista,
-    ettei se tarjoa samaa. Älä väitä ratkaisua ainutlaatuiseksi tai paremmaksi ilman näyttöä.
-    Tarkista jokaisesta ehdotetusta erottautumiskeinosta, tarjoaako nimetty kilpailija
-    jo samaa. Luokittele se yhteiseksi ominaisuudeksi, lähteellä osoitetuksi eroksi
-    tai vielä vahvistamattomaksi ehdotukseksi. Kerro vertailtava ominaisuus ja lähde.
-    Kilpailijan jo tarjoama ominaisuus on kilpailuun vastaamista, ei sellaisenaan
-    erottautumista. Ero yhteen kilpailijaan ei osoita eroa koko markkinaan.
-  strategy_task: >
-    Ehdota enintään kahta tapaa erottua juuri tällä toimialalla ja alueella.
-    Käytä otsikoita "Mahdolliset tavat erottua" ja "Valinnan haittapuoli".
-    Nimeä asiakkaalle koituva hyöty, vertailtava vaihtoehto ja menetettävä etu tai riski.
-    Kerro, mikä on ehdotus ja mikä perustuu havaintoon. Jos uskottavaa eroa ei löytynyt,
-    sano se ja nimeä ratkaiseva puuttuva tieto. Älä keksi eroa vain täyttääksesi osion.
-    Perustele jokainen suositus analyytikon vertailulla: mihin nimettyyn kilpailijaan
-    nähden ja millä konkreettisella tavalla suunniteltu tarjonta eroaisi?
-    Jos kilpailija tarjoaa jo samaa, kuvaa vaihtoehto kilpailuun vastaamisena.
-    Älä keksi parempaa laatua, halvempaa hintaa tai laajempaa valikoimaa eroksi.
-    Ilman osoitettua eroa esitä mahdollinen uusi suunta testattavana ehdotuksena
-    ja kerro, mitä siitä pitäisi varmistaa. Älä lupaa asiakaskysyntää eron perusteella.
+    Vertaa käyttäjän suunnitelmaa nimettyihin ulkopuolisiin vaihtoehtoihin.
+    Täytä comparisons vain lähteillä tuetuista vertailukohteista. Kerro
+    konkreettinen ominaisuus ja onko se yhteinen, osoitettu ero, testattava
+    ehdotus vai tuntematon. Puuttuva tieto ei osoita kilpailijan puutetta.
+    Kilpailijan jo tarjoama ominaisuus ei itsessään erotu siitä. Ero yhteen
+    kilpailijaan ei osoita markkinanlaajuista ainutlaatuisuutta.
+    Suosittele suuntaa aineiston sallimissa rajoissa; myös valinnan lykkääminen on sallittua.
+    Asiakashyöty on oletus ilman suoraa näyttöä; älä keksi parempaa laatua tai hintaa.
   report_task: >
     Vastaa siihen, miten ratkaisu voisi erottua löydetyistä vaihtoehdoista.
     Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset erot",
     "Näytön vahvuus ja puutteet", "Suositeltava suunta" ja "Lähteet".
-    Tiivistä ratkaiseva vertailu ja ehdotuksen haittapuoli. Erota kilpailijoista
-    tarkistetut tiedot ehdotetusta erottautumisesta ja epävarmoista oletuksista.
-    Säilytä ero yhteisen ominaisuuden, osoitetun eron ja testattavan ehdotuksen välillä.
-    Älä nosta kilpailijan jo tarjoamaa ominaisuutta sellaisenaan erottautumiskeinoksi.
-    Keskity nykyisten vaihtoehtojen vertailuun. Käsittele ajallista kehitystä vain,
-    jos lähteistetty muutos auttaa vastaamaan kysymykseen; älä lisää irrallista
-    vuosivertailua tai sen puuttumista koskevaa kappaletta.
+    Säilytä ero yhteisen ominaisuuden, osoitetun eron ja testattavan ehdotuksen
+    välillä. Nimeä vertailtava toimija ja ehdotuksen haittapuoli.
+    Käsittele ajallista kehitystä vain, jos se auttaa vastaamaan kysymykseen.
 market:
   research_task: >
-    Kuvaa käyttäjän kysymyksen kannalta olennaiset toimijat, asiakkaat ja löydetyt
-    paikalliset havainnot. Käytä otsikoita "Markkinan nykytilanne" ja "Tiedon rajat".
-    Valitse tiedot aiheen mukaan: esimerkiksi tuotteiden myynti, palvelujen käyttö,
-    tapahtumien kävijät tai työvoiman kysyntä vain silloin, kun ne liittyvät kysymykseen.
-    Kerro lähteen alue ja ajankohta silloin kun ne tunnetaan. Älä keksi markkinan kokoa.
-  trend_task: >
-    Kuvaa enintään kolme kysymyksen kannalta olennaista muutosta lähteineen.
-    Käytä otsikoita "Havaitut muutokset" ja "Epävarmat kehityssuunnat".
-    Kerro, mitä verrataan ja miltä ajankohdilta tiedot ovat. Ilman aikavertailua
-    puhu nykytilan havainnosta, älä kasvusta. Erota toteutunut muutos ennusteesta.
-    Toisen maan tai alueen kehitystä ei saa esittää paikallisena tosiasiana.
+    Kokoa kysymyksen kannalta olennaiset toimijat ja markkinahavainnot.
+    Etsi ajoitettua vertailutietoa sekä kansainvälisiä kehityssuuntia.
+    Erota nykytila, todennettu muutos ja ennuste. Ilman vertailukelpoisia
+    aikahavaintoja älä väitä kasvua. Säilytä lähteen alue ja ajanjakso;
+    toisen maan kehitys ei ole paikallinen tosiasia. Älä keksi markkinan kokoa.
   analysis_task: >
-    Arvioi, mitä havainnot tarkoittavat juuri käyttäjän kysymykselle.
-    Käytä otsikoita "Mitä havainnoista voi päätellä" ja "Mitä ei voi päätellä".
-    Tarkista vahvin päätelmä sekä tärkein epävarmuus alkuperäisiä havaintoja vasten.
-    Korjaa perusteettomat päätelmät ilman sisäistä virhelistaa. Älä oleta käyttäjän perustavan yritystä,
+    Vastaa käyttäjän markkinakysymykseen: mitä aineisto osoittaa nykytilasta,
+    mikä muutos voidaan perustella ja mikä jää epävarmaksi. Kerro vaikutus
+    käyttäjän omaan kysymykseen. Älä oleta hänen perustavan yritystä,
     etsivän työtä tai kehittävän ohjelmistoa, ellei hän ole sitä kertonut.
-  strategy_task: >
-    Muodosta enintään kaksi päätösvaihtoehtoa käyttäjän todelliseen kysymykseen.
-    Käytä otsikoita "Vaihtoehdot käyttäjälle" ja "Ratkaiseva epävarmuus".
-    Kerro vaihtoehdon hyöty, haitta ja havainto, johon se perustuu.
-    Jos käyttäjä pyytää vain tilannekuvaa, kerro seurattavat asiat toimintasuunnitelman sijaan.
-    Älä anna yleistä uraneuvontaa, tuoteideoita tai tutkimusohjeita aiheen ohi.
+    Suositus voi olla seurattava asia, jos käyttäjä pyytää vain tilannekuvaa.
+    Nimeä vaihtoehtoinen tulkinta ja ratkaiseva epävarmuus. comparisons on tyhjä lista.
   report_task: >
     Vastaa käyttäjän markkinakysymykseen löydetyn aineiston rajoissa.
     Käytä otsikoita "Vastaus kysymykseesi", "Olennaiset havainnot",

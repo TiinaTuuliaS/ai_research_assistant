@@ -16,7 +16,7 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(set(contracts), {"demand", "competition", "market"})
         for mode, outputs in contracts.items():
             self.assertEqual(set(outputs), set(tasks))
-            self.assertEqual(len(set(outputs.values())), 5)
+            self.assertEqual(len(set(outputs.values())), 3)
             inputs = dict(topic="Test", current_year="2026", goal="Question", research_type=mode,
                           target_market="Finland", budget="Unknown", language="suomi", quality_rules=QUALITY_RULES)
             inputs.update({f"{name}_deliverable": value for name, value in outputs.items()})
@@ -33,7 +33,7 @@ class ConfigurationTests(unittest.TestCase):
                 assistant = AiResearchAssistant()
                 crew = assistant.crew()
                 inputs = assistant.prepare({"research_type": mode, "topic": "Test", "language": "suomi", "current_year": "2026"})
-                self.assertEqual(len(crew.tasks), 5)
+                self.assertEqual(len(crew.tasks), 3)
                 for task in crew.tasks:
                     self.assertIn(inputs[f"{task.name}_deliverable"], task.description.format(**inputs))
                     self.assertIn(inputs[f"{task.name}_deliverable"], task.expected_output.format(**inputs))

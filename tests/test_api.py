@@ -173,6 +173,7 @@ class AuthenticationTests(unittest.TestCase):
                 response = self.client.post("/research", json={"topic": "Service", "research_type": mode, "problem": "Customer pain", "competitors": "Company A", "goal": "Recent changes"})
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(expected, generate.call_args.args[2])
+                self.assertIn("Recent changes", generate.call_args.args[2])
                 self.assertEqual(generate.call_args.kwargs["research_type"], mode)
         self.assertEqual(self.client.post("/research", json={"topic": "Service", "research_type": "unknown"}).status_code, 422)
 
@@ -193,7 +194,7 @@ class AuthenticationTests(unittest.TestCase):
     def test_job_progress_history_and_ownership(self):
         self.register_login()
         def generate(*args, progress, checkpoint):
-            for i in range(5):
+            for i in range(3):
                 progress(i, "running", None)
                 with self.sessions() as db:
                     job = db.query(ResearchJob).one()
@@ -237,9 +238,9 @@ class AuthenticationTests(unittest.TestCase):
         def fail(*args, progress, checkpoint, **kwargs):
             checkpoint(inputs={"topic": "Market", "language": "suomi", "current_year": "2026"},
                        sources={"https://example.test": {"title": "Source", "snippet": "Evidence", "retrieved": "2026-10-07"}})
-            for i in range(4):
+            for i in range(2):
                 progress(i, "completed", f"Evidence {i}")
-            progress(4, "running", None)
+            progress(2, "running", None)
             checkpoint(draft="Unverified draft", feedback="Lähdeviitteet puuttuvat.")
             raise ValueError("guardrail")
         with patch.object(api, "generate_report", side_effect=fail):
@@ -257,8 +258,8 @@ class AuthenticationTests(unittest.TestCase):
             self.assertEqual(feedback, "Lähdeviitteet puuttuvat.")
             self.assertIn("https://example.test", sources)
             self.assertEqual(steps[0]["output"], "Evidence 0")
-            progress(4, "running", None)
-            progress(4, "completed", "Validated report")
+            progress(2, "running", None)
+            progress(2, "completed", "Validated report")
             return "Validated report"
         with patch.object(api, "resume_report", side_effect=resume) as writer, patch.object(api, "generate_report") as research:
             self.assertEqual(self.client.post(path + "/retry-report").status_code, 202)
@@ -268,7 +269,7 @@ class AuthenticationTests(unittest.TestCase):
         after = self.client.get(path).json()
         self.assertEqual(after["status"], "completed")
         self.assertEqual(after["quota"], before["quota"])
-        self.assertEqual(after["steps"][:4], before["steps"][:4])
+        self.assertEqual(after["steps"][:-1], before["steps"][:-1])
         self.assertEqual(len(self.client.get("/researches").json()), 1)
 
     def test_failed_retry_retains_partial_results_and_private_ownership(self):
@@ -307,7 +308,7 @@ class AuthenticationTests(unittest.TestCase):
         with self.sessions() as db:
             job = db.get(ResearchJob, job_id)
             job.status = "running"
-            job.steps = [*job.steps[:4], {**job.steps[4], "status": "running"}]
+            job.steps = [*job.steps[:-1], {**job.steps[-1], "status": "running"}]
             db.commit()
         # Exercise the normal startup recovery against the existing database.
         with TestClient(api.app):

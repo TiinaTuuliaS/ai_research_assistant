@@ -31,10 +31,11 @@ class CrewAICompatibilityTests(unittest.TestCase):
             ResearchResult.model_validate({'topic': 'Test', 'findings': [{'source': '[S1]'}]})
         except ValidationError as exc:
             conversion_error = exc
-        for method, schema in [('research_task', ResearchResult), ('trend_task', TrendResult)]:
+        for method, schema in [('research_task', ResearchResult)]:
             with self.subTest(task=method), patch.dict(os.environ, {'OPENAI_API_KEY': 'test', 'SERPER_API_KEY': 'test'}):
                 assistant = AiResearchAssistant()
                 task = getattr(assistant, method)()
+                task.callback = None  # Conversion contract only; empty evidence is rejected by the application callback.
                 with patch.object(Agent, 'execute_task', side_effect=['invalid structure', schema(topic='Test', findings=[])]) as execute, \
                      patch.object(Task, '_export_output', side_effect=conversion_error):
                     output = task.execute_sync()

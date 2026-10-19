@@ -17,6 +17,10 @@ class ResearchOutputError(ValueError):
     """The research stage cannot safely pass its output to downstream tasks."""
 
 
+class NoEvidenceError(ResearchOutputError):
+    """Search completed but no observation survived source verification."""
+
+
 class ResearchFinding(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -34,6 +38,9 @@ class ResearchFinding(BaseModel):
     # and from serialization/UI. Old stored findings can still be loaded.
     evidence_excerpt: SkipJsonSchema[str] = Field(default="", exclude=True)
     evidence_kind: Literal["offering", "price", "usage", "purchase", "interest", "marketing_claim", "other"]
+    trend_kind: Literal["snapshot", "observed_change", "forecast", "example"] = "snapshot"
+    local_relevance: str = Field(default="", max_length=700,
+        description="Relevance and limits of applying an international observation locally.")
     entity: OptionalEvidenceText = Field(description="Company, branch or population explicitly identified by the source; empty string if unknown")
     area: OptionalEvidenceText = Field(description="Geographical scope explicitly supported by the source; empty string if unknown")
     period: OptionalEvidenceText = Field(description="Time the observation concerns, not retrieval date; empty string if unknown")
@@ -85,7 +92,7 @@ def render_research(result: ResearchResult, language: str = "suomi", sources: di
              "purchase": "Toteutunut osto", "interest": "Kiinnostus", "marketing_claim": "Markkinointiväite", "other": "Muu havainto"}
     for index, finding in enumerate(result.findings, 1):
         url = urls.get(str(finding.source), str(finding.source))
-        lines.extend([f"### {finding.title}", finding.summary,
+        lines.extend([f"### {finding.title}", f"F{index}", finding.summary,
                       (f"[Lähde]({url}) · Osuvuus aiheeseen: {finding.relevance}/10"
                        if fi else f"[Source]({url}) · Relevance to topic: {finding.relevance}/10")])
         if finding.source_id:
@@ -95,6 +102,9 @@ def render_research(result: ResearchResult, language: str = "suomi", sources: di
             f"**{kinds[finding.evidence_kind] if fi else finding.evidence_kind}** — " + (scope or ("Kohde, alue ja ajankohta eivät selviä." if fi else "Scope and date unknown.")),
             ("Rajaukset: " if fi else "Limitations: ") + " ".join(finding.limitations),
         ])
+        if finding.trend_kind != "snapshot":
+            labels = {"observed_change": "Havaittu muutos", "forecast": "Ennuste", "example": "Esimerkki"}
+            lines.append((labels[finding.trend_kind] if fi else finding.trend_kind) + ": " + finding.local_relevance)
     if result.findings:
         lines.append("Osuvuus kuvaa yhteyttä aiheeseen, ei lähteen luotettavuutta tai kysynnän vahvuutta."
                      if fi else "Relevance measures fit to the topic, not source reliability or strength of demand.")

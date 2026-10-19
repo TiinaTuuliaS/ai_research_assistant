@@ -13,12 +13,13 @@ from dotenv import load_dotenv
 from pydantic import HttpUrl
 
 from .citations import validate_citations
-from .evidence import assess_findings, repair_excerpts, finding_record, accepted_sources
+from .evidence import assess_findings, repair_excerpts, finding_record, accepted_sources, evidence_ledger, recover_unused_sources
 from .source_registry import resolve_source, SOURCE_ID
 from .quality import QUALITY_RULES, review_output
-from .research_result import ResearchOutputError, ResearchResult, render_research
+from .research_result import ResearchOutputError, NoEvidenceError, ResearchResult, render_research
 from .tools.search_tool import SourceSearchTool, SourceReadTool
-from .trend_result import TrendResult, render_trends, attach_trend_evidence
+from .trend_result import attach_trend_evidence
+from .analysis_result import AnalysisResult, render_analysis
 
 
 @CrewBase
@@ -35,12 +36,14 @@ class AiResearchAssistant:
         model = os.getenv("RESEARCH_MODEL", "openai/gpt-4.1-mini")
         self.llm = LLM(model=model, temperature=0.2)
         self.reviewer = LLM(model=model, temperature=0, max_tokens=4000)
+        synthesis_model = os.getenv("SYNTHESIS_MODEL") or model
+        self.synthesis_llm = LLM(model=synthesis_model, temperature=0.2)
+        self.report_reviewer = LLM(model=synthesis_model, temperature=0, max_tokens=4000)
         self.brief = {}
         self.accepted_outputs = []
         self.excluded_findings = []
         self.search_tool = SourceSearchTool()
         self.source_reader = SourceReadTool(self.search_tool, "research_task")
-        self.trend_reader = SourceReadTool(self.search_tool, "trend_task")
         self.checkpoint = None
 
     def save_checkpoint(self, **values):
@@ -50,7 +53,7 @@ class AiResearchAssistant:
     @before_kickoff
     def prepare(self, inputs):
         self.search_tool.reset_run()
-        self.search_tool.set_search_limit(3)
+        self.search_tool.set_search_limit(6)
         self.accepted_outputs.clear()
         self.excluded_findings.clear()
         inputs = dict(inputs or {})
@@ -74,34 +77,23 @@ class AiResearchAssistant:
         return Agent(
             config=self.agents_config["researcher"],  # type: ignore[index]
             tools=[self.search_tool, self.source_reader], llm=self.llm, cache=False, verbose=False,
-        )
-
-    @agent
-    def trend_analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config["trend_analyst"],  # type: ignore[index]
-            tools=[self.search_tool, self.trend_reader], llm=self.llm, cache=False, verbose=False,
+            allow_delegation=False,
         )
 
     @agent
     def analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["analyst"],  # type: ignore[index]
-            llm=self.llm, verbose=False,
-        )
-
-    @agent
-    def strategist(self) -> Agent:
-        return Agent(
-            config=self.agents_config["strategist"],  # type: ignore[index]
-            llm=self.llm, verbose=False,
+            llm=self.synthesis_llm, verbose=False,
+            allow_delegation=False,
         )
 
     @agent
     def writer(self) -> Agent:
         return Agent(
             config=self.agents_config["writer"],  # type: ignore[index]
-            llm=self.llm, verbose=False,
+            llm=self.synthesis_llm, verbose=False,
+            allow_delegation=False,
         )
 
     @task
@@ -139,14 +131,9 @@ class AiResearchAssistant:
                     # Exact registered URLs can be bound losslessly; never
                     # reject usable evidence for this formatting difference.
                     finding.source = self.search_tool.sources[url]['source_id']
-            if not SOURCE_ID.fullmatch(finding.source) or not finding.supporting_text.strip():
-                feedback = "Use a registered source ID such as S1 and a short exact supporting_text from that source for each observation. Never output URLs."
-                self.save_checkpoint(feedback=feedback)
-                return False, feedback
-            if finding.period and not finding.period_support.strip():
-                feedback = "Supply period_support from the source for a stated period, or leave both period and period_support empty. Never use retrieval/current year as observation time."
-                self.save_checkpoint(feedback=feedback)
-                return False, feedback
+            # Missing or incorrect evidence belongs to the per-finding repair
+            # below. Rejecting the whole task here discards valid observations
+            # and prevents repair_excerpts from ever seeing the defect.
         return True, output
 
     def accept_research(self, output: TaskOutput):
@@ -164,91 +151,56 @@ class AiResearchAssistant:
         self.excluded_findings.extend(excluded)
         output.pydantic, excluded = assess_findings(output.pydantic, self.search_tool.sources, self.brief, self.reviewer)
         self.excluded_findings.extend(excluded)
+        output.pydantic = recover_unused_sources(output.pydantic, self.search_tool.sources, self.brief, self.reviewer)
+        if not output.pydantic.findings:
+            self.save_checkpoint(feedback="Lähdeaineistosta ei saatu vahvistettuja havaintoja. Analyysia ei muodostettu.")
+            raise NoEvidenceError("No source-backed observations after extraction and bounded recovery")
         for source in self.search_tool.sources.values():
             source["research_findings"] = []
         for index, finding in enumerate(output.pydantic.findings, 1):
             url = original_urls[str(finding.source)]
             self.search_tool.sources[url]["research_findings"].append(
                 finding_record(finding, f"F{index}"))
-        output.raw = render_research(output.pydantic, self.brief.get("language", "suomi"), self.search_tool.sources, self.excluded_findings)
-        self.accepted_outputs.append({"agent": output.agent, "stage": "research_task", "text": output.raw})
+        display = render_research(output.pydantic, self.brief.get("language", "suomi"), self.search_tool.sources, self.excluded_findings)
+        output.raw = json.dumps({"accepted_findings": evidence_ledger(self.search_tool.sources)}, ensure_ascii=False)
+        self.accepted_outputs.append({"agent": output.agent, "stage": "research_task", "text": display})
         self.search_tool.set_search_limit(6)
-        self.save_checkpoint(feedback="")
-
-    @task
-    def trend_task(self) -> Task:
-        return Task(
-            config=self.tasks_config["trend_task"],  # type: ignore[index]
-            agent=self.trend_analyst(), context=[self.research_task()],
-            output_pydantic=TrendResult,
-            guardrail=self.check_trends, guardrail_max_retries=1,
-            callback=self.accept_trends,
-        )
-
-    def check_trends(self, output: TaskOutput) -> tuple[bool, Any]:
-        if not isinstance(output.pydantic, TrendResult):
-            try:
-                output.pydantic, output.json_dict = self.trend_task()._export_output(output.raw)
-            except (ValueError, TypeError):
-                output.pydantic, output.json_dict = None, None
-        if not isinstance(output.pydantic, TrendResult):
-            self.save_checkpoint(feedback="Trendivaiheen vastausta ei voitu muuntaa havaintorakenteeseen.")
-            return False, "Return TrendResult with source-bound findings, trend_kind and local_relevance. Use an empty findings list if evidence is insufficient."
-        return self.check_finding_contract(output)
-
-    def accept_trends(self, output: TaskOutput):
-        if not isinstance(output.pydantic, TrendResult):
-            raise ResearchOutputError("Trendivaiheen tulos ei vastaa TrendResult-rakennetta.")
-        originals = {str(HttpUrl(url)): url for url in self.search_tool.sources}
-        for finding in output.pydantic.findings:
-            url = resolve_source(finding.source, self.search_tool.sources)
-            if url:
-                self.search_tool.read_sources([url], purpose=finding.trend_kind,
-                    reason=finding.title, stage="trend_task")
-        attached, _ = repair_excerpts(output.pydantic, self.search_tool.sources, self.reviewer)
-        # Evidence repair preserves the concrete TrendResult schema and scope.
-        checked = attached
-        if attached.findings:
-            checked, _ = assess_findings(attached, self.search_tool.sources, self.brief, self.reviewer)
-        output.pydantic = TrendResult(topic=output.pydantic.topic, findings=checked.findings)
-        for source in self.search_tool.sources.values():
-            source["trend_findings"] = []
-        for index, finding in enumerate(output.pydantic.findings, 1):
-            self.search_tool.sources[originals[str(finding.source)]]["trend_findings"].append(
-                finding_record(finding, f"T{index}"))
-        output.raw = render_trends(output.pydantic, self.brief.get("language", "suomi"), self.search_tool.sources)
-        self.accepted_outputs.append({"agent": output.agent, "stage": "trend_task", "text": output.raw})
         self.save_checkpoint(feedback="")
 
     @task
     def analysis_task(self) -> Task:
         return Task(
             config=self.tasks_config["analysis_task"],  # type: ignore[index]
-            agent=self.analyst(), context=[self.research_task(), self.trend_task()],
-            guardrail=self.check_quality, guardrail_max_retries=1,
+            agent=self.analyst(), context=[self.research_task()],
+            output_pydantic=AnalysisResult,
+            guardrail=self.check_analysis, guardrail_max_retries=1,
+            callback=self.accept_analysis,
         )
 
-    @task
-    def strategy_task(self) -> Task:
-        return Task(
-            config=self.tasks_config["strategy_task"],  # type: ignore[index]
-            agent=self.strategist(), context=[self.research_task(), self.trend_task(), self.analysis_task()],
-            guardrail=self.check_quality, guardrail_max_retries=1,
-        )
+    def check_analysis(self, output: TaskOutput) -> tuple[bool, Any]:
+        try:
+            if not isinstance(output.pydantic, AnalysisResult):
+                output.pydantic, output.json_dict = self.analysis_task()._export_output(output.raw)
+            if not isinstance(output.pydantic, AnalysisResult):
+                raise ValueError("Return the required AnalysisResult structure.")
+            output.pydantic.validate_evidence(evidence_ledger(self.search_tool.sources), self.brief)
+        except (ValueError, TypeError) as exc:
+            self.save_checkpoint(feedback=str(exc))
+            return False, str(exc)
+        return True, output
 
-    def check_quality(self, output: TaskOutput) -> tuple[bool, Any]:
-        valid, result = review_output(output.raw, sources=self.search_tool.sources,
-                                      brief=self.brief, previous=self.accepted_outputs,
-                                      reviewer=self.reviewer)
-        if valid:
-            self.accepted_outputs.append({"agent": output.agent, "stage": output.name, "text": result})
-        return valid, result
+    def accept_analysis(self, output: TaskOutput):
+        display = render_analysis(output.pydantic, evidence_ledger(self.search_tool.sources),
+                                  self.brief.get("language", "suomi"))
+        output.raw = output.pydantic.model_dump_json()
+        self.accepted_outputs.append({"agent": output.agent, "stage": "analysis_task", "text": display})
+        self.save_checkpoint(feedback="")
 
     def check_sources(self, output: TaskOutput) -> tuple[bool, Any]:
         self.save_checkpoint(draft=output.raw, feedback="Loppuraportin tarkistus on kesken.")
         valid, result = review_output(output.raw, sources=self.search_tool.sources,
                                       brief=self.brief, previous=self.accepted_outputs,
-                                      reviewer=self.reviewer, final_report=True)
+                                      reviewer=self.report_reviewer, final_report=True)
         if not valid:
             self.save_checkpoint(feedback="Loppuraportin sisältö- tai kielitarkistus: " + str(result))
             marker = "Use this further corrected draft, preserving its limits:\n"
@@ -286,7 +238,7 @@ class AiResearchAssistant:
         return Task(
             config=self.tasks_config["report_task"],  # type: ignore[index]
             agent=self.writer(),
-            context=[self.research_task(), self.trend_task(), self.analysis_task(), self.strategy_task()],
+            context=[self.research_task(), self.analysis_task()],
             guardrail=self.check_sources, guardrail_max_retries=1,
         )
 

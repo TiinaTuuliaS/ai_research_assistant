@@ -1,4 +1,4 @@
-export const emptyDraft = { research_type: "demand", topic: "", goal: "", target_market: "", budget_eur: "", idea: "", audience: "", problem: "", solution: "", competitors: "", competition_market: "", industry: "", region: "", question: "" };
+export const emptyDraft = { research_type: "demand", topic: "", goal: "", target_market: "", budget_eur: "", idea: "", audience: "", demand_region: "", payer: "", problem: "", solution: "", competitors: "", competition_market: "", competition_region: "", criteria: "", industry: "", region: "", market_audience: "", market_focus: "overview", period: "", question: "" };
 const KEY = "research-draft";
 
 export function readDraft() {

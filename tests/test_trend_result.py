@@ -4,25 +4,12 @@ from unittest.mock import Mock, patch
 
 from pydantic import ValidationError
 from src.ai_research_assistant.trend_result import TrendFinding, TrendResult, attach_trend_evidence
+from src.ai_research_assistant.research_result import ResearchFinding, ResearchResult
 from src.ai_research_assistant.tools.search_tool import SourceSearchTool, SourceReadTool
 from src.ai_research_assistant.evidence import evidence_ledger
 
 
 class TrendTests(unittest.TestCase):
-    def test_real_guardrail_retry_accepts_typed_trend_result(self):
-        from crewai import Agent, Task
-        from src.ai_research_assistant.crew import AiResearchAssistant
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}):
-            assistant = AiResearchAssistant()
-            task = assistant.trend_task()
-            with patch.object(Agent, "execute_task", side_effect=["bad", TrendResult(topic="Test", findings=[])]), \
-                 patch.object(Task, "_export_output", side_effect=lambda raw: (None, None) if raw == "bad" else
-                              (TrendResult.model_validate_json(raw), None)):
-                output = task.execute_sync()
-        self.assertIsInstance(output.pydantic, TrendResult)
-        self.assertEqual(output.pydantic.findings, [])
-        self.assertNotIn('"findings"', output.raw)
-
     def finding(self):
         return TrendFinding(title="Markkinaennuste", summary="Julkaisija ennustaa 5,6 prosentin vuosikasvua.",
             source="https://forecast.test/", relevance=8, evidence_kind="other", entity="Julkaisija",
@@ -50,20 +37,22 @@ class TrendTests(unittest.TestCase):
             assistant.reviewer.call.return_value = {"assessments": [{"finding_id": "F1",
                 "supported": True, "scope_supported": True, "single_source_supported": True,
                 "reason": "Ennuste on rajattu lähteen alueeseen ja ajankohtaan."}]}
-            finding = self.finding().model_copy(update={'source': 'S1',
+            finding = ResearchFinding.model_validate(self.finding().model_dump()).model_copy(update={'source': 'S1',
                 'supporting_text': 'Forecast 5.6% global 2026–2030', 'period_support': '2026–2030'})
-            with patch.object(Agent, "execute_task", return_value=TrendResult(topic="Test", findings=[finding])), \
+            with patch.object(Agent, "execute_task", return_value=ResearchResult(topic="Test", findings=[finding])), \
                  patch("src.ai_research_assistant.tools.search_tool.read_page", return_value={
                      "page_status": "retrieved", "page_text": "Forecast 5.6% global 2026–2030"}) as read:
-                output = assistant.trend_task().execute_sync()
+                output = assistant.research_task().execute_sync()
             read.assert_called_once()
-            self.assertIsInstance(output.pydantic, TrendResult)
-            for value in ("Ennuste", "Maailma", "2026–2030", "https://forecast.test/"):
+            self.assertIsInstance(output.pydantic, ResearchResult)
+            for value in ('"trend_kind": "forecast"', "Maailma", "2026–2030", "https://forecast.test/"):
                 self.assertIn(value, output.raw)
+            self.assertIn("Ennuste", assistant.accepted_outputs[0]["text"])
             saved = assistant.checkpoint.call_args.kwargs["sources"]
             self.assertEqual(evidence_ledger(saved)[0]["trend_kind"], "forecast")
-            self.assertEqual(evidence_ledger(saved)[0]["finding_id"], "T1")
+            self.assertEqual(evidence_ledger(saved)[0]["finding_id"], "F1")
             self.assertIn("trend_kind", assistant.reviewer.call.call_args.args[0][1]["content"])
+            saved["https://forecast.test/"]["trend_findings"] = saved["https://forecast.test/"]["research_findings"]
             report = "## Vastaus\nRajattu arvio.\n\n## Lähteet\n"
             final = attach_trend_evidence(report, saved)
             for value in ("Ennuste", "Maailma", "2026–2030", "https://forecast.test/"):

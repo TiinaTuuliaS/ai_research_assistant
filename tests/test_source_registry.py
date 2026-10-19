@@ -13,6 +13,18 @@ from src.ai_research_assistant.tools.search_tool import SourceSearchTool, Source
 
 
 class SourceRegistryTests(unittest.TestCase):
+    def test_observation_citations_resolve_only_through_registered_provenance(self):
+        from src.ai_research_assistant.source_registry import render_references
+        sources = {
+            'https://first.test/': {'source_id': 'S4', 'research_findings': [{'finding_id': 'F1'}]},
+            'https://second.test/': {'source_id': 'S21', 'research_findings': [{'finding_id': 'F2'}, {'finding_id': 'F3'}]},
+        }
+        rendered = render_references('Väite [F1, F2, F3]. Tuntematon [F99].', sources)
+        self.assertIn('[Lähde S4](https://first.test/)', rendered)
+        self.assertEqual(rendered.count('[Lähde S21](https://second.test/)'), 1)
+        self.assertIn('[F99]', rendered)
+        self.assertNotIn('[F1, F2, F3]', rendered)
+
     def test_grouped_citations_resolve_each_id_and_reject_unknown_member(self):
         sources = {'https://one.test/': {}, 'https://two.test/': {}}
         text = render_references('Tieto [S1, S2].', sources)
@@ -113,14 +125,17 @@ class SourceRegistryTests(unittest.TestCase):
         result, _ = filter_excerpt_findings(ResearchResult(topic='Test', findings=[finding]), sources)
         self.assertIsNone(result.findings[0].period)
 
-    def test_new_task_rejects_url_output_but_saved_url_models_remain_loadable(self):
+    def test_unknown_url_is_filtered_per_finding_instead_of_rejecting_task(self):
         from crewai.tasks.task_output import TaskOutput
         from src.ai_research_assistant.crew import AiResearchAssistant
         with patch.dict(os.environ, {'OPENAI_API_KEY': 'test', 'SERPER_API_KEY': 'test'}):
             assistant = AiResearchAssistant()
             old = self.finding(source='https://example.test/')
             output = TaskOutput(description='Test', agent='Researcher', raw='', pydantic=ResearchResult(topic='Test', findings=[old]))
-            self.assertFalse(assistant.check_research(output)[0])
+            self.assertTrue(assistant.check_research(output)[0])
+            checked, excluded = filter_excerpt_findings(output.pydantic, assistant.search_tool.sources)
+            self.assertEqual(checked.findings, [])
+            self.assertTrue(excluded)
             output.pydantic = ResearchResult(topic='Test', findings=[self.finding()])
             self.assertTrue(assistant.check_research(output)[0])
 
@@ -136,7 +151,11 @@ class SourceRegistryTests(unittest.TestCase):
                 'scope_supported': True, 'single_source_supported': True, 'reason': 'Supported.'}]}
             with patch.object(Agent, 'execute_task', return_value=ResearchResult(topic='Test', findings=[self.finding()])):
                 output = assistant.research_task().execute_sync()
-            self.assertIn('[S1]', output.raw)
-            self.assertNotIn('The market was', output.raw)
+            import json
+            handoff = json.loads(output.raw)['accepted_findings'][0]
+            self.assertEqual(handoff['source_id'], 'S1')
+            self.assertEqual(handoff['supporting_text'], 'The market was 895 million euros in 2023.')
+            self.assertIn('[S1]', assistant.accepted_outputs[0]['text'])
+            self.assertNotIn('The market was', assistant.accepted_outputs[0]['text'])
             saved = next(iter(assistant.checkpoint.call_args.kwargs['sources'].values()))
             self.assertEqual(saved['research_findings'][0]['period_support'], '895 million euros in 2023')

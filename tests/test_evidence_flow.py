@@ -37,7 +37,7 @@ class EvidenceFlowTests(unittest.TestCase):
         finding = TrendFinding(**self.finding(title="Omistajanvaihdos",
             summary="Helenin latausliiketoiminta siirtyi Plugitille syyskuussa 2026.",
             supporting_text="not a verbatim passage", period="1.9.2026", period_support="1.9.2026",
-            entity="Helen", area="Suomi", evidence_kind="other").model_dump(),
+            entity="Helen", area="Suomi", evidence_kind="other").model_dump(exclude={"trend_kind", "local_relevance"}),
             trend_kind="observed_change", local_relevance="Toimija vaihtuu; ei osoita käyttöasteen kasvua.")
         repaired = finding.model_copy(update={"supporting_text": passage})
         reviewer = Mock()

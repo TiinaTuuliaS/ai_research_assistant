@@ -56,7 +56,9 @@ def _validate_citations(raw: str, sources: dict[str, dict[str, str]], *, require
                      + ("Raportista puuttuu erillinen näytön arviointi. Päätelmien vahvuutta ei ole vahvistettu."
                         if finnish else "The report lacks a separate evidence assessment. The strength of its conclusions has not been established."))
     entries = []
-    for url in sorted(all_urls):
+    # The bibliography describes sources actually used in the report body,
+    # not links left behind after the editor removed a claim.
+    for url in sorted(body_urls):
         source = sources[url]
         title = re.sub(r"[\[\]<>\r\n]", "", source["title"])
         label = "Haettu" if finnish else "Retrieved"
@@ -74,9 +76,10 @@ def _validate_citations(raw: str, sources: dict[str, dict[str, str]], *, require
                             if finnish else "An assessment of this source's purpose and limitations is missing.")
         reasons = list(dict.fromkeys(item.get("reason", "").strip()
                                      for item in source.get("selections", []) if item.get("reason", "").strip()))
-        if reasons:
+        if reasons and not (source.get("research_findings") or source.get("trend_findings")):
             # Selection is the agent's stated rationale, not an independent
-            # reliability rating. Keep it separate from evidence limitations.
+            # reliability rating. Once findings exist, use the reviewed notes
+            # above; the pre-reading rationale may contain rejected assumptions.
             reason = re.sub(r"[\[\]<>\r\n]", " ", reasons[0])
             entries[-1] += (" Valintaperuste: " if finnish else "Selection rationale: ") + reason
     if len(body_urls) < 5:

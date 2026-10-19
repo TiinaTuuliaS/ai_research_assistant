@@ -54,7 +54,7 @@ export default function PartialResults({ initialJob }) {
     <h2>{job.topic}</h2>
     <p role="status">Tutkimuksesta valmistui {done}/{job.steps?.length || 5} vaihetta.</p>
     <p>{active ? "Loppuraporttia viimeistellään. Tallennetut välitulokset ovat luettavissa alla."
-      : job.validation_error || job.error || "Loppuraportti jäi kesken."}</p>
+      : job.error || "Loppuraportti jäi kesken. Sen sisältöä tai lähdeviitteitä ei voitu vahvistaa. Valmistuneet osatulokset ovat luettavissa alla."}</p>
     {job.partial_result ? <>
       <p>Valmistuneet tulokset ovat tallessa omissa raporteissasi. Kooste on keskeneräinen, eikä sen väitteitä ole vahvistettu loppuanalyysissä.</p>
       <button className="button subtle" onClick={() => results.current?.scrollIntoView?.({ behavior: "smooth", block: "start" })}>Lue valmistuneet tulokset</button>

@@ -8,6 +8,16 @@ from src.ai_research_assistant.progress import track_tasks
 
 
 class ProgressTests(unittest.TestCase):
+    def test_structured_handoff_is_displayed_as_readable_text(self):
+        task = Task(description="Research", expected_output="Findings")
+        received = []
+        output = TaskOutput(description="Research", raw='{"accepted_findings": []}', agent="Researcher")
+        with track_tasks(SimpleNamespace(tasks=[task]), lambda *args: received.append(args),
+                         display_output=lambda index, output: "Rajatut lähdehavainnot."):
+            task.callback(output)
+        self.assertEqual(received, [(0, "completed", "Rajatut lähdehavainnot.")])
+        self.assertEqual(output.raw, '{"accepted_findings": []}')
+
     def test_real_events_are_scoped_and_callbacks_cleaned_up(self):
         task = Task(description="Research", expected_output="Findings")
         other = Task(description="Other research", expected_output="Other findings")

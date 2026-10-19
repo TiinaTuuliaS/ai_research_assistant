@@ -1,7 +1,7 @@
 # AI Markkinatutkimusassistentti
 
 Sovellus auttaa selvittämään idean kysyntää, vertailemaan kilpailijoita ja tutkimaan
-markkinoiden muutoksia. Viisi AI-agenttia tuottaa omat näkemyksensä ja yhteisen
+markkinoiden muutoksia. Kolme AI-agenttia kokoaa havainnot, analyysin ja yhteisen
 loppuraportin lähteineen. Työn etenemistä voi seurata käyttöliittymässä.
 
 Etusivuun voi tutustua vapaasti. Tutkimusten tekeminen ja omien raporttien katselu
@@ -26,7 +26,7 @@ päätelmä kertoo tutkimustavan mukaisesti, mitä niistä ei vielä voi ratkais
 Raakaa lähdetekstiä tai hylättyä luonnosta ei julkaista vararaporttina.
 Niistä muodostetaan ilman uutta AI-kutsua kooste, joka merkitään keskeneräiseksi
 myös PDF-viennissä. Hylätty kirjoittajan luonnos näkyy erikseen tarkistamattomana.
-Jos neljä ensimmäistä vaihetta valmistuivat ja lähdeaineisto tallentui,
+Jos tutkimuksen aiemmat vaiheet valmistuivat ja lähdeaineisto tallentui,
 voit korjata tallennettua loppuraporttiluonnosta kuluttamatta uutta tutkimuskertaa.
 Kirjoittaja saa luonnoksen, tarkan hylkäyssyyn ja lähteet. Se ehdottaa vain yksilöityjen
 tekstikohtien korvauksia, jotka sovellus soveltaa luonnokseen. Muut kohdat säilyvät
@@ -137,20 +137,30 @@ Validoiduista
 kentistä muodostettu teksti välitetään nykyisille seuraaville agenteille ja
 raporttinäkymään. Havaintojen tunnisteet ja rajaukset säilyvät sisältötarkistuksessa
 ja tallennetuissa jatkamistiedoissa. Osuvuus ei tarkoita lähteen luotettavuutta.
-Trendianalyytikko etsii myös kansainvälisiä kehityssuuntia ja arvioi niiden paikallisen
-soveltamisen rajoja. Yksittäinen konseptiesimerkki erotetaan trendistä ja ennusteesta.
-Myös trendivaihe palauttaa Pydantic-rakenteen: jokaisella havainnolla on lähde,
-alue, ajankohta, luokitus (havaittu muutos, ennuste tai esimerkki) ja soveltamisen rajat.
+Tutkija etsii myös kansainvälisiä kehityssuuntia. Havainto erottaa nykytilan,
+havaitun muutoksen, ennusteen ja yksittäisen esimerkin sekä kertoo alueen,
+ajankohdan ja paikallisen soveltamisen rajat.
 Valittujen lähteiden käyttötarkoitus ja valintaperustelu tallennetaan tutkimuksen
 lähdeaineistoon. Käytettyjen lähteiden perustelut näkyvät lähdeluettelossa.
-Hyväksytyt trendihavainnot säilyvät loppuraportin lähteet ja rajaukset -osiossa,
-vaikka kirjoittaja jättäisi niiden viitteitä pois yhteenvedosta.
-Strategi erottaa osoitetun eron, yhteisen ominaisuuden ja testattavan ehdotuksen.
-Loppuraportin johtopäätökset tarkistetaan alkuperäisiä havaintoja ja lähteitä vasten;
-sisältötarkistuksen muokkaama raportti tarkistetaan vielä kerran. Nämä tarkistukset
-lisäävät AI-kutsuja. Mallin tekemä sisältötarkistus ei takaa virheettömyyttä.
+Analyytikon `AnalysisResult` sisältää vastauksen, havaintotunnisteisiin sidotut
+päätelmät, epävarmuudet, suosituksen ja vaihtoehdon. Kilpailijavertailussa se
+erottaa osoitetun eron, yhteisen ominaisuuden ja testattavan ehdotuksen.
+Tuntemattomat havaintotunnisteet ja väärä tutkimustapa hylätään. Viittauksen
+olemassaolo ei yksin todista päätelmän oikeellisuutta.
+Puutteellista tukikatkelmaa tai ajankohdan perustelua korjataan havaintokohtaisesti:
+yksi puutteellinen havainto ei pysäytä koko tutkijavaihetta. Korjaamatta jäänyt
+havainto jätetään pois ja muut havainnot säilyvät. Rakenteeltaan virheellinen
+kokonaistulos voi edelleen keskeyttää vaiheen yhden korjausyrityksen jälkeen.
+Havaittu muutos tarvitsee lähteen tukeman ajankohdan. Analyytikon päätelmän
+vuosia verrataan juuri sen viittaamien havaintojen tukiteksteihin; käyttäjän
+pyytämä vuosiväli ei itsessään ole näyttöä kehityksestä.
+Loppuraportin johtopäätökset tarkistetaan alkuperäisiä havaintoja ja lähteitä vasten.
+Käyttäjän lähtökuvauksen oletukset erotetaan lähdetiedosta. Sisältötarkistuksen
+muokkaama raportti tarkistetaan vielä kerran ja sen korjaukset säilytetään;
+pelkkä toinen tekstikorjaus ei hylkää raporttia. Lähdeviitteet tarkistetaan tämän
+jälkeen. Nämä tarkistukset lisäävät AI-kutsuja, eivätkä takaa virheettömyyttä.
 
-Muiden agenttien tekstit tarkistetaan erillisellä mallikutsulla. Tarkistus arvioi kielen selkeyttä, aiheen
+Loppuraportti tarkistetaan erillisellä mallikutsulla. Tarkistus arvioi kielen selkeyttä, aiheen
 mukaista sisältöä ja väitteiden tukea lähteiden sivuteksteissä tai hakukatkelmissa sekä korjaa sanamuotoja
 ja poistaa perusteettomia väitteitä. Mallin tekemä tarkistus ei takaa virheettömyyttä.
 Hylättyä välitulosta ja loppuraporttia yritetään korjata kerran.
@@ -161,9 +171,8 @@ Varakooste tunnistaa myös tavalliset lähdeosoitteet ja tarkistaa ne tallennetu
 Jos tutkijan havaintojen sisältötarkistus palauttaa virheellisen rakenteen tai
 puutteellisen arviolistan, vain tarkistus uusitaan kerran; verkkohakua ei toisteta.
 Yhden tutkimuksen verkkohakutyökalua voi kutsua enintään kuusi kertaa palveluun asti.
-Tutkija ja trendianalyytikko valitsevat hakutuloksista luettavat alkuperäiset sivut
-aiheen mukaan. Sivulukuja tehdään enintään kuusi: tutkijalle enintään kolme ja
-loput trendivaiheessa. Muualla toimivat vertailukohteet erotetaan paikallisesta näytöstä.
+Tutkija valitsee hakutuloksista luettavat alkuperäiset sivut
+aiheen mukaan. Sivulukuja tehdään enintään kuusi samassa tutkimusvaiheessa. Muualla toimivat vertailukohteet erotetaan paikallisesta näytöstä.
 Havaintojen tarkistuksessa jokaisen väitteen mukana kulkee vain sen oman lähteen
 aineisto. Tarkistus arvioi erikseen alueellisen yleistyksen ja lähteen riittävyyden.
 Jos viimeistely epäonnistuu, varakooste voidaan tallentaa raportiksi. Hylätty luonnos
@@ -171,15 +180,37 @@ ja tarkistuksen perustelu säilyvät erikseen tutkimuksen yksityisissä jatkamis
 Tarkistukset ja korjausyritykset lisäävät AI-kutsuja. Vanhoja raportteja ei muuteta.
 Mallin voi vaihtaa palvelimen `RESEARCH_MODEL`-asetuksella; oletus on
 `openai/gpt-4.1-mini`. Mallinvaihto vaikuttaa laatuun ja tokenien hintaan.
+Analyysille, kirjoittajalle ja loppuraportin sisältötarkistukselle voi valita
+erikseen mallin, esimerkiksi `SYNTHESIS_MODEL=openai/gpt-4.1`.
+Tyhjä asetus käyttää tutkimusmallia kaikissa vaiheissa. Vahvempi malli kasvattaa
+API-kuluja; vertailukokeessa se paransi päätelmien viimeistelyä, mutta ei poista
+lähteiden arvioinnin tarvetta. Malliasetus ei muuta aiemmin tallennettuja raportteja.
 
 Havaintojen lähdetuki tarkistetaan erillään liiketoimintakysymyksestä: oikea
 tarjontahavainto voi säilyä, vaikka se ei osoita maksavaa kysyntää. Virheellinen
-tukikatkelma voidaan korjata kerran saman lähteen tallennetusta tekstistä sekä
-tutkija- että trendivaiheessa; korjattu havainto tarkistetaan edelleen.
-Tämä voi lisätä enintään yhden AI-kutsun kumpaankin vaiheeseen. Myös trendin
-sisällön rajattua korjausta voidaan yrittää kerran ja tarkistaa uudelleen.
-Myöhempien agenttien sisältötarkistus saa hyväksytyt havainnot tukiteksteineen,
+tukikatkelma voidaan korjata kerran saman lähteen tallennetusta tekstistä
+tutkimusvaiheessa; korjattu havainto tarkistetaan edelleen.
+Tukikatkelman korjaus voi lisätä enintään yhden AI-kutsun tutkimusvaiheeseen.
+Loppuraportin sisältötarkistus saa hyväksytyt havainnot tukiteksteineen,
 ei koko hakuaineistoa. Havaintojen puuttuminen ei osoita tiedon puuttumista maailmasta.
+
+Jos valittu lähde jäi ilman hyväksyttyä havaintoa, siitä voidaan poimia yksi
+rajattu havainto erillisellä AI-kutsulla. Tämä tehdään enintään kuudelle valitulle
+lähteelle niiden jo tallennetusta tekstistä, ilman uusia verkkohakuja. Malli
+valitsee numeroidun tekstikohdan ja palvelin liittää alkuperäisen tukitekstin.
+Tekstikohdissa säilytetään myös viereisten virkkeiden asiayhteys.
+Lähteen osoite auttaa erottamaan julkaisijan sen mainitsemista toimittajista.
+Oikein rajattu toisen kaupungin tai maan esimerkki kelpaa vertailuaineistoksi;
+sen ei tarvitse osoittaa paikallista kysyntää. Lähteiden alkuperäiset tunnisteet
+säilyvät myös analyysin linkeissä, vaikka numeroinnissa olisi aukkoja.
+Poimitut havainnot tarkistetaan yhdessä ennen analyysia. Tämä voi lisätä enintään
+kuusi poimintakutsua ja sisältötarkistuksen (virheellisen tarkistusrakenteen
+uusinta korkeintaan kerran). Hylätyt poiminnat voivat käyttää saman yhden
+rajauskorjauksen ja uusintatarkistuksen kuin tutkijan alkuperäiset havainnot:
+esimerkiksi väärä vuosiluku voidaan poistaa menettämättä oikeaa tarjontatietoa.
+Tämä lisää enintään kaksi mallikutsua, tai kolme jos uusintatarkistuksen rakennevirhe korjataan.
+Jos hyväksyttyjä havaintoja ei jää, analyysia ei
+käynnistetä tyhjällä aineistolla ja tutkimuskerta palautetaan.
 
 Oikeita tuotoksia voi arvioida komennolla `uv run python -m scripts.evaluate_reports demand`
 (vaihtoehdot: `demand`, `competition`, `market`). Tämä käyttää API-krediittejä ja
@@ -194,3 +225,5 @@ Tutkimusten tekniset virhetiedot tallentuvat tiedostoon `.runtime/backend-errors
 joten ne säilyvät terminaalin sulkemisen jälkeen. Loki sisältää virhetyypin,
 koodikohdat ja validoinnissa epäonnistuneet kentät, ei raporttisisältöä tai API-avaimia.
 Lokit kiertävät automaattisesti (enintään kolme noin 1 Mt:n tiedostoa).
+
+Tutkimuksessa on kolme agenttia: tutkija kokoaa lähteistetyt havainnot ja kehityssuunnat, analyytikko muodostaa päätelmän ja suosituksen, ja kirjoittaja viimeistelee raportin. Tutkimustavat ovat edelleen kysynnän arviointi, kilpailijavertailu ja markkinan kehitys. Tutkijan ja analyytikon tulokset validoidaan Pydantic-malleilla.

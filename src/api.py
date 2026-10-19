@@ -29,7 +29,7 @@ from .models import Base, LoginSession, Research, ResearchJob, ResearchRecovery,
 from .partial_results import partial_report
 from .diagnostics import record_failure
 from .security import hash_password, is_password_hash, token_hash, verify_password
-from .ai_research_assistant.research_result import ResearchOutputError
+from .ai_research_assistant.research_result import ResearchOutputError, NoEvidenceError
 
 COOKIE_NAME = "research_session"
 SESSION_SECONDS = 12 * 60 * 60
@@ -42,10 +42,8 @@ ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv(
 DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(32))
 job_lock = RLock()
 STEPS = [
-    ("researcher", "Tutkija", "Kartoittaa markkinat ja kilpailijat"),
-    ("trend_analyst", "Trendianalyytikko", "Etsii muutoksia ja uusia signaaleja"),
-    ("analyst", "Markkina-analyytikko", "Arvioi kysyntää ja epävarmuuksia"),
-    ("strategist", "Strategi", "Punnitsee vaihtoehtoja ja suosituksia"),
+    ("researcher", "Tutkija", "Etsii lähteet, kilpailijat ja kehityssuunnat"),
+    ("analyst", "Markkina-analyytikko", "Muodostaa päätelmät ja punnitsee vaihtoehdot"),
     ("writer", "Raportin kirjoittaja", "Yhdistää näkemykset ja tarkistaa lähdeviitteet"),
 ]
 
@@ -133,10 +131,13 @@ class ResearchRequest(BaseModel):
 def research_goal(data: ResearchRequest) -> str:
     """User decision context only; per-agent responsibilities live in deliverables.yaml."""
     if data.research_type == "demand":
-        return "Assess demand for this idea among the specified customers. Customer problem: " + data.problem
+        return ("Assess demand for this idea among the specified customers. "
+                "User-described problem (unverified hypothesis, not market evidence): " + data.problem
+                + ("\nAdditional user context (unverified): " + data.goal if data.goal else ""))
     if data.research_type == "competition":
         return ("Compare competitors against the user's solution and evaluate differentiation. "
-                "User-provided competitors (unverified; discover alternatives if empty): " + data.competitors)
+                "User-provided competitors (unverified; discover alternatives if empty): " + data.competitors
+                + ("\nRequested comparison criteria: " + data.goal if data.goal else ""))
     if data.research_type == "market":
         return "Map this industry and region to answer the user's question: " + data.goal
     return data.goal
@@ -266,7 +267,11 @@ def generate_report(topic: str, language: str, goal: str = "",
                 finished.add(index)
             assistant.save_checkpoint()
             progress(index, status, output)
-        with track_tasks(crew, notify):
+        def display_output(index, output):
+            if index < len(assistant.accepted_outputs):
+                return assistant.accepted_outputs[index]["text"]
+            return output.raw
+        with track_tasks(crew, notify, display_output=display_output):
             return crew.kickoff(inputs=inputs).raw
     except Exception as exc:
         record_failure(exc, operation="generate_report")
@@ -276,10 +281,10 @@ def generate_report(topic: str, language: str, goal: str = "",
             raise
         logger.warning("Research synthesis incomplete; returning report from accepted evidence")
         if progress:
-            for index in range(4):
+            for index in range(len(crew.tasks) - 1):
                 if index not in finished:
                     progress(index, "failed", "Vaihe ei valmistunut; raportti perustuu valmistuneisiin tuloksiin.")
-            progress(4, "completed", fallback)
+            progress(len(crew.tasks) - 1, "completed", fallback)
         # The published fallback is saved as Research.result. Retain the rejected
         # writer draft and its feedback separately for diagnosis and repair.
         assistant.save_checkpoint()
@@ -301,8 +306,12 @@ def resume_report(inputs, sources, steps, progress, checkpoint, draft, feedback)
     assistant.prepare(inputs)
     assistant.search_tool.sources.update(sources)
     assistant.checkpoint = checkpoint
-    assistant.accepted_outputs = [{"agent": s["label"], "text": s["output"], "stage": stage}
-        for s, stage in zip(steps[:4], ("research_task", "trend_task", "analysis_task", "strategy_task"))]
+    stage_names = {"researcher": "research_task", "trend_analyst": "trend_task",
+                   "analyst": "analysis_task", "strategist": "strategy_task"}
+    assistant.accepted_outputs = [
+        {"agent": step["label"], "text": step["output"], "stage": stage_names[step["key"]]}
+        for step in steps[:-1]
+    ]
     def accept_repair(output):
         try:
             if not isinstance(output.pydantic, ReportRepair):
@@ -338,7 +347,7 @@ def resume_report(inputs, sources, steps, progress, checkpoint, draft, feedback)
     )
     crew = Crew(agents=[assistant.writer()], tasks=[writer], process=Process.sequential, cache=False, verbose=False)
     try:
-        with track_tasks(crew, lambda i, state, output: progress(4, state, output)):
+        with track_tasks(crew, lambda i, state, output: progress(len(steps) - 1, state, output)):
             return crew.kickoff().raw
     except Exception as exc:
         record_failure(exc, operation="resume_report")
@@ -347,7 +356,7 @@ def resume_report(inputs, sources, steps, progress, checkpoint, draft, feedback)
         if not fallback:
             raise
         # Do not overwrite the failed repair's draft and validation feedback.
-        progress(4, "completed", fallback)
+        progress(len(steps) - 1, "completed", fallback)
         return fallback
 
 
@@ -362,8 +371,10 @@ def save_checkpoint(job_id, **values):
 
 def retry_available(job, saved):
     return bool(job.status == "failed" and saved and saved.inputs.get("current_year")
-                and saved.sources and saved.draft and saved.feedback and len(job.steps) == 5
-                and all(s.get("status") == "completed" and s.get("output") for s in job.steps[:4]))
+                and saved.sources and saved.draft and saved.feedback and [s.get("key") for s in job.steps] in (
+                    ["researcher", "analyst", "writer"],
+                    ["researcher", "trend_analyst", "analyst", "strategist", "writer"])
+                and all(s.get("status") == "completed" and s.get("output") for s in job.steps[:-1]))
 
 
 def job_payload(job, db):
@@ -440,6 +451,8 @@ def run_job(job_id, data, session_hash, retry=False):
             job.status = "failed"
             if isinstance(exc, PermissionError):
                 job.error = "Istunto päättyi tutkimuksen aikana. Kirjaudu uudelleen sisään."
+            elif isinstance(exc, NoEvidenceError):
+                job.error = "Lähteitä löytyi, mutta niistä ei saatu vahvistettuja havaintoja raporttia varten. Tutkimuksesta ei muodostettu markkinapäätelmiä."
             elif isinstance(exc, ResearchOutputError):
                 job.error = "Tutkijan tuloksen rakenne tai lähdeviitteet eivät läpäisseet tarkistusta. Tutkimus keskeytettiin ennen seuraavaa vaihetta."
             elif isinstance(exc, UnicodeError):
@@ -506,7 +519,7 @@ def retry_report(job_id: str, request: Request, background: BackgroundTasks,
             raise HTTPException(409, "Tutkimus on jo käynnissä. Odota sen valmistumista.")
         job.status = "queued"
         job.error = None
-        job.steps = [*job.steps[:4], {**job.steps[4], "status": "pending", "output": ""}]
+        job.steps = [*job.steps[:-1], {**job.steps[-1], "status": "pending", "output": ""}]
         saved.retries += 1
         db.commit()
         background.add_task(run_job, job.id, None, token_hash(request.cookies[COOKIE_NAME]), True)

@@ -17,7 +17,8 @@ test("failed job exposes partial results without opening agent disclosures", () 
   render(<PartialResults initialJob={job} />);
   expect(screen.getByText(/Tallennettu havainto/)).toBeVisible();
   expect(screen.getByRole("status")).toHaveTextContent("4/5");
-  expect(screen.getByText("Lähdeviitteet puuttuvat.")).toBeVisible();
+  expect(screen.getByText(/Sen sisältöä tai lähdeviitteitä ei voitu vahvistaa/)).toBeVisible();
+  expect(screen.queryByText("Lähdeviitteet puuttuvat.")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Lue valmistuneet tulokset" })).toBeEnabled();
   expect(screen.queryByRole("heading", { name: "Yhdistetty loppuraportti" })).not.toBeInTheDocument();
   expect(screen.getByText("Tarkistamaton teksti").closest("details")).not.toHaveAttribute("open");

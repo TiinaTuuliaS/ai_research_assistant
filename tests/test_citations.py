@@ -27,6 +27,17 @@ class CitationTests(unittest.TestCase):
     def test_rejects_fabricated_sources(self):
         self.assertFalse(validate_citations(self.report.replace("two.test", "invented.test"), self.sources)[0])
 
+    def test_discovery_assumption_is_not_published_over_reviewed_source_notes(self):
+        self.sources["https://one.test/report"].update(
+            selections=[{"reason": "Proves a local market gap"}],
+            research_findings=[{"summary": "One foreign example"}])
+        raw = self.report.replace("- [One](https://one.test/report)",
+                                 "- [One](https://one.test/report) — Foreign example, not local demand.")
+        valid, report = validate_citations(raw, self.sources)
+        self.assertTrue(valid)
+        self.assertIn("Foreign example, not local demand.", report)
+        self.assertNotIn("Proves a local market gap", report)
+
     def test_evidence_section_accepts_other_markdown_heading_levels(self):
         for level in ("#", "###"):
             report = self.report.replace("## Katsaus", level + " Näytön vahvuus ja puutteet")
@@ -64,6 +75,13 @@ class CitationTests(unittest.TestCase):
         raw = self.report.replace("- [Two](https://two.test/data)", "")
         self.assertTrue(validate_citations(raw, self.sources)[0])
         self.assertFalse(validate_citations(raw.replace("two.test", "fabricated.test"), self.sources)[0])
+
+    def test_bibliography_does_not_count_a_source_removed_from_report_body(self):
+        self.sources["https://unused.test/"] = {"title": "Unused", "retrieved": "2026-10-18"}
+        raw = self.report + "\n- [Unused](https://unused.test/)"
+        valid, report = validate_citations(raw, self.sources)
+        self.assertTrue(valid)
+        self.assertNotIn("https://unused.test/", report)
 
     def test_failure_reason_is_logged_without_report_text(self):
         with self.assertLogs("src.ai_research_assistant.citations", level="WARNING") as logs:

@@ -38,6 +38,8 @@ class QualityTests(unittest.TestCase):
         payload = json.loads(messages[1]["content"])
         self.assertNotIn("page_text", payload["retrieved_evidence"][0])
         self.assertEqual(payload["original_findings"], source["research_findings"])
+        self.assertNotIn("research_findings", payload["retrieved_evidence"][0])
+        self.assertNotIn("previous_stages", payload)
         self.assertIn("total-provider counts", messages[0]["content"])
 
     def test_competition_review_preserves_evidence_when_correcting_recommendation(self):
@@ -93,6 +95,19 @@ class QualityTests(unittest.TestCase):
         reviewer.call.return_value = '{"issues": []}'
         text = "Aineisto ei riitä kysynnän arviointiin."
         self.assertEqual(review_output(text, sources={}, brief={}, previous=[], reviewer=reviewer), (True, text))
+
+    def test_user_assumption_is_separate_from_factual_evidence(self):
+        import json
+        reviewer = Mock()
+        reviewer.call.return_value = QualityReview(issues=[])
+        review_output("Aineisto on rajallinen.", sources={},
+                      brief={"goal": "There are no competitors", "language": "suomi"},
+                      previous=[{"text": "There are no competitors"}], reviewer=reviewer)
+        payload = json.loads(reviewer.call.call_args.args[0][1]["content"])
+        self.assertNotIn("goal", payload["brief"])
+        self.assertEqual(payload["unverified_user_context"]["goal"], "There are no competitors")
+        self.assertEqual(payload["original_findings"], [])
+        self.assertNotIn("previous_stages", payload)
 
     def test_invalid_review_does_not_silently_pass(self):
         reviewer = Mock()

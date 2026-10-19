@@ -7,11 +7,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import ExampleReport from "./ExampleReport";
 
-import { researchTypes, selectedType, researchPayload } from "../researchTypes";
+import { researchTypes, selectedType, researchPayload, researchPreview } from "../researchTypes";
 
 export default function Dashboard({ user, setUser, checking, draft, setDraft }) {
   const navigate = useNavigate();
   const type = selectedType(draft);
+  const preview = researchPreview(draft);
   const [result, setResult] = useState("");
   const [reportTopic, setReportTopic] = useState("");
   const [loading, setLoading] = useState(false);
@@ -94,9 +95,9 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
     <section className="hero">
       <div className="hero-copy">
         <h1>🤖 AI Markkinatutkimusassistentti</h1>
-        <p className="lead">Tutki markkinoita eri näkökulmista. Viisi tekoälyagenttia kokoaa havainnot, punnitsee niiden merkityksen ja tiivistää vastauksen kysymykseesi.</p>
+        <p className="lead">Tutki markkinoita eri näkökulmista. Kolme tekoälyagenttia kokoaa havainnot, punnitsee niiden merkityksen ja tiivistää vastauksen kysymykseesi.</p>
         <a className="text-link" href="#esimerkki">Katso esimerkkiraportti ilman tunnusta ↗</a>
-        <div className="agent-badges" aria-label="Tutkimuksen vaiheet"><span>🔍 Tutkimus</span><span>📈 Trendit</span><span>📊 Analyysi</span><span>🧠 Strategia</span><span>✍️ Raportti</span></div>
+        <div className="agent-badges" aria-label="Tutkimuksen vaiheet"><span>🔍 Tutkimus</span><span>📊 Analyysi</span><span>✍️ Raportti</span></div>
       </div>
       <form id="tutkimus" className="panel research-form" onSubmit={runResearch}>
         <p className="eyebrow">Sinun lähtökohtasi</p>
@@ -118,11 +119,20 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
             <h3>{type.title}</h3><p className="field-help">{type.outcome}</p>
             {type.fields.map(input => <div key={input.name}>
               <label htmlFor={input.name}>{input.label}{input.optional && <span className="optional"> · valinnainen</span>}</label>
-              {input.multiline
-                ? <textarea id={input.name} rows={3} required={!input.optional} maxLength={input.max} placeholder={input.placeholder} {...field(input.name)} />
-                : <input id={input.name} required={!input.optional} maxLength={input.max} placeholder={input.placeholder} {...field(input.name)} />}
+              {input.options ? <select id={input.name} {...field(input.name)} value={draft[input.name] || input.defaultValue}>
+                {input.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select> : input.multiline
+                ? <textarea id={input.name} rows={3} required={!input.optional} maxLength={input.max} placeholder={input.placeholder} aria-describedby={`${input.name}-help`} {...field(input.name)} />
+                : <input id={input.name} required={!input.optional} maxLength={input.max} placeholder={input.placeholder} aria-describedby={`${input.name}-help`} {...field(input.name)} />}
+              {input.help && <p id={`${input.name}-help`} className="field-help">{input.help}</p>}
             </div>)}
           </div>
+          <section className="research-preview" aria-label="Tutkimuskysymyksen esikatselu">
+            <h3>Tätä tutkimuksessa selvitetään</h3>
+            <p className="preview-question">{preview.text}</p>
+            {preview.gaps.length > 0 && <><ul>{preview.gaps.map(gap => <li key={gap}>{gap}</li>)}</ul>
+              <p className="field-help">Voit täydentää tietoja yllä tai jatkaa avoimilla rajauksilla. Avoin rajaus voi tehdä vastauksesta yleisemmän.</p></>}
+          </section>
           <details className="research-extras"><summary>Lisätiedot · valinnainen budjetti</summary>
           <label htmlFor="budget">Kokeilubudjetti (€) <span className="optional">valinnainen</span></label>
           <input id="budget" type="number" min="0" max="10000000" step="0.01" placeholder="Esim. 150" aria-describedby="budget-help" {...field("budget_eur")} />
@@ -156,7 +166,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
     </section>}
 
     <section className="value-grid" aria-label="Raportin sisältö">
-      <article><span className="step-number">01</span><h2>Agenttien näkemykset</h2><p>Tutkija, trendianalyytikko, markkina-analyytikko ja strategi tuovat esiin omat havaintonsa.</p></article>
+      <article><span className="step-number">01</span><h2>Agenttien näkemykset</h2><p>Tutkija kokoaa lähteistetyt havainnot. Analyytikko arvioi niiden merkityksen ja suosittelee etenemissuuntaa.</p></article>
       <article><span className="step-number">02</span><h2>Yhdistetty loppuraportti</h2><p>Kirjoittaja kokoaa olennaisen: mitä tiedetään, mitä voi päätellä ja mikä on vielä epävarmaa.</p></article>
       <article><span className="step-number">03</span><h2>Lähteet näkyvillä</h2><p>Tarkista havaintojen lähteet ja arvioi, kuinka hyvin aineisto vastaa kysymykseesi.</p></article>
     </section>

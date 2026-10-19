@@ -5,7 +5,7 @@ from crewai.events import TaskStartedEvent, crewai_event_bus
 
 
 @contextmanager
-def track_tasks(crew, notify):
+def track_tasks(crew, notify, display_output=None):
     task_indexes = {task.id: index for index, task in enumerate(crew.tasks)}
 
     def started(source, event):
@@ -18,7 +18,8 @@ def track_tasks(crew, notify):
         def completed(output, index=index, original=task.callback):
             if original:
                 original(output)
-            notify(index, "completed", output.raw)
+            text = display_output(index, output) if display_output else output.raw
+            notify(index, "completed", text)
         task.callback = completed
     crewai_event_bus.on(TaskStartedEvent)(started)
     try:

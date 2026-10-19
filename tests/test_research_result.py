@@ -1,15 +1,17 @@
+from tests.test_analysis_result import analysis_fixture
+from src.ai_research_assistant.analysis_result import AnalysisResult
 import os
 import unittest
 from unittest.mock import patch
 
 from pydantic import ValidationError
 
-from src.ai_research_assistant.research_result import ResearchFinding, ResearchResult, render_research
+from src.ai_research_assistant.research_result import ResearchFinding, ResearchResult, render_research, NoEvidenceError
 from src.ai_research_assistant.trend_result import TrendResult, TrendFinding
 
 
 class ResearchResultTests(unittest.TestCase):
-    def test_bad_excerpt_after_retry_does_not_stop_five_stage_workflow(self):
+    def test_bad_excerpt_after_retry_does_not_stop_three_stage_workflow(self):
         from crewai import Agent
         from src.ai_research_assistant.crew import AiResearchAssistant
         for keep_valid in (True, False):
@@ -33,11 +35,16 @@ class ResearchResultTests(unittest.TestCase):
                         return TrendResult(topic="Test", findings=[])
                     if task.name == "report_task":
                         return "Aineisto ei osoita kysyntää [Yksi](https://example.test) [Kaksi](https://two.test/)\n\n## Lähteet\n"
-                    return "Aineisto ei osoita kysyntää."
+                    return analysis_fixture(ids=["F1"] if keep_valid else [])
                 with patch.object(Agent, "execute_task", execute):
+                    if not keep_valid:
+                        with self.assertRaises(NoEvidenceError):
+                            assistant.crew().kickoff(inputs={"topic": "Test", "language": "suomi", "current_year": "2026"})
+                        self.assertEqual(calls, ["research_task"])
+                        continue
                     result = assistant.crew().kickoff(inputs={"topic": "Test", "language": "suomi", "current_year": "2026"})
                 self.assertEqual(calls.count("research_task"), 1)
-                self.assertEqual(len(result.tasks_output), 5)
+                self.assertEqual(len(result.tasks_output), 3)
                 self.assertEqual(len(result.tasks_output[0].pydantic.findings), int(keep_valid))
                 self.assertIn("Aineisto ei osoita", result.raw)
 
@@ -134,25 +141,21 @@ class ResearchResultTests(unittest.TestCase):
                     return ResearchResult(topic="Test topic", findings=[ResearchFinding(**self.wire_finding())]).model_dump_json()
                 if task.name == "report_task":
                     return "Answer [One](https://example.test) [Two](https://two.test/)\n\n## Sources\n"
-                if task.name == "trend_task":
-                    return TrendResult(topic="Test", findings=[TrendFinding(**{**self.finding(),
-                        "source": "S2", "supporting_text": "Forecast 2026–2030", "period_support": "Forecast 2026–2030", "area": "Maailma", "period": "2026–2030",
-                        "trend_kind": "forecast", "local_relevance": "Ei suoraa näyttöä Suomesta."})])
-                return "Stage output"
+                return analysis_fixture(topic="Test topic", ids=["F1"])
 
-            with patch.object(Agent, "execute_task", execute), track_tasks(crew, lambda *args: updates.append(args)):
+            def display_output(index, output):
+                return assistant.accepted_outputs[index]["text"] if index < len(assistant.accepted_outputs) else output.raw
+            with patch.object(Agent, "execute_task", execute), track_tasks(
+                    crew, lambda *args: updates.append(args), display_output=display_output):
                 result = crew.kickoff(inputs={"topic": "Test topic", "language": "suomi", "current_year": "2026"})
             self.assertIsInstance(result.tasks_output[0].pydantic, ResearchResult)
-            self.assertIsInstance(result.tasks_output[1].pydantic, TrendResult)
-            self.assertIn("Trendien lähteet ja rajaukset", result.raw)
+            self.assertIsInstance(result.tasks_output[1].pydantic, AnalysisResult)
             for name, context in calls:
-                if name in ("analysis_task", "strategy_task", "report_task"):
-                    for value in ("Ennuste", "Maailma", "2026–2030", "https://two.test/"):
-                        self.assertIn(value, context)
                 if name in ("trend_task", "analysis_task", "strategy_task", "report_task"):
                     self.assertIn("Lähteessä mainittu palvelu.", context)
                     self.assertIn("https://example.test", context)
-                    self.assertIn("8/10", context)
+                    self.assertIn('"relevance": 8', context)
+                    self.assertIn('"supporting_text": "Lähteessä mainittu palvelu."', context)
                     self.assertNotIn("Lähteen tekstikohta:", context)
                     self.assertIn("Käyttömäärä ei selviä", context)
             research_update = next(output for index, status, output in updates if index == 0 and status == "completed")
@@ -177,7 +180,7 @@ class ResearchResultTests(unittest.TestCase):
             assistant = AiResearchAssistant()
             output = TaskOutput(description="Test", agent="Researcher", raw="",
                                 pydantic=ResearchResult(topic="Test", findings=[ResearchFinding(**self.finding())]))
-            assistant.accept_research(output)
+            with self.assertRaises(NoEvidenceError):
+                assistant.accept_research(output)
             self.assertEqual(output.pydantic.findings, [])
-            self.assertIn("ei löytynyt", output.raw)
             self.assertNotIn("https://example.test", output.raw)

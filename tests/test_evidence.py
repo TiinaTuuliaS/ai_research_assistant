@@ -174,7 +174,7 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(data["original_findings"][0]["finding_id"], "F1")
         self.assertEqual(json.loads(reviewer.call.call_args.args[0][1]["content"])["draft"], corrected)
 
-    def test_unresolved_contradiction_is_not_published_as_accepted(self):
+    def test_second_pass_correction_is_preserved_without_another_rewrite(self):
         reviewer = Mock()
         reviewer.call.side_effect = [
             QualityReview(issues=[ReviewIssue(excerpt="A", correction="B")]),
@@ -182,8 +182,8 @@ class EvidenceTests(unittest.TestCase):
         ]
         ok, feedback = review_output("A", sources={}, brief={"research_type": "market"}, previous=[],
                                      reviewer=reviewer, final_report=True)
-        self.assertFalse(ok)
-        self.assertIn("further corrected draft", feedback)
+        self.assertTrue(ok)
+        self.assertEqual(feedback, "C")
         self.assertEqual(reviewer.call.call_count, 2)
 
     def test_empty_evidence_is_honest_and_uses_no_assessment_call(self):
@@ -215,5 +215,5 @@ class EvidenceTests(unittest.TestCase):
                     brief={"research_type": mode}, previous=[], reviewer=reviewer, final_report=True)
                 self.assertTrue(ok)
                 messages = reviewer.call.call_args.args[0]
-                self.assertIn("FINAL REPORT AUDIT", messages[0]["content"])
+                self.assertIn("opening answer", messages[0]["content"])
                 self.assertEqual(json.loads(messages[1]["content"])["original_findings"][0]["evidence_kind"], "offering")
