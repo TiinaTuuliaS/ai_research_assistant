@@ -16,7 +16,8 @@ class Conclusion(BaseModel):
 
 class Comparison(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    competitor: NonEmptyText
+    competitor: str = Field(default='', description='Display name resolved from competitor_id by the server.')
+    competitor_id: str = Field(default='', description='Exact entity_id (E1 etc.) from accepted findings. Never invent an ID.')
     feature: NonEmptyText
     status: Literal["shared", "evidenced_difference", "proposal", "unknown"]
     finding_ids: list[str] = Field(min_length=1, max_length=12)

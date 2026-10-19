@@ -54,6 +54,10 @@ class SourceSearchTool(SerperDevTool):
     def sources(self) -> dict[str, dict[str, Any]]:
         return self._sources
 
+    @property
+    def remaining_searches(self) -> int:
+        return max(0, self._phase_limit - self._search_count)
+
     def set_search_limit(self, limit: int):
         self._phase_limit = min(6, max(0, limit))
 

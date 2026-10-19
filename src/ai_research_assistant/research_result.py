@@ -37,6 +37,11 @@ class ResearchFinding(BaseModel):
     # Server-owned evidence, deliberately absent from the model's output schema
     # and from serialization/UI. Old stored findings can still be loaded.
     evidence_excerpt: SkipJsonSchema[str] = Field(default="", exclude=True)
+    source_context: SkipJsonSchema[str] = Field(default="unknown",
+        description="Server-owned source meaning: observation, forecast, marketing_claim, testimonial or unknown.")
+    question_fit: SkipJsonSchema[str] = Field(default='unassessed')
+    fit_reason: SkipJsonSchema[str] = Field(default='')
+    entity_id: SkipJsonSchema[str] = Field(default='')
     evidence_kind: Literal["offering", "price", "usage", "purchase", "interest", "marketing_claim", "other"]
     trend_kind: Literal["snapshot", "observed_change", "forecast", "example"] = "snapshot"
     local_relevance: str = Field(default="", max_length=700,
@@ -102,6 +107,11 @@ def render_research(result: ResearchResult, language: str = "suomi", sources: di
             f"**{kinds[finding.evidence_kind] if fi else finding.evidence_kind}** — " + (scope or ("Kohde, alue ja ajankohta eivät selviä." if fi else "Scope and date unknown.")),
             ("Rajaukset: " if fi else "Limitations: ") + " ".join(finding.limitations),
         ])
+        if finding.question_fit == 'background':
+            lines.append('Taustatieto: ei vastaa suoraan tutkimuskysymykseen.' if fi else 'Background only: does not directly answer the research question.')
+        if finding.source_context in {'testimonial', 'marketing_claim'}:
+            lines.append(('Lähteen luonne: yksittäinen asiakaskokemus.' if finding.source_context == 'testimonial'
+                          else 'Lähteen luonne: esittäjän oma lupaus tai väite.') if fi else 'Attributed experience or claim; not independent confirmation.')
         if finding.trend_kind != "snapshot":
             labels = {"observed_change": "Havaittu muutos", "forecast": "Ennuste", "example": "Esimerkki"}
             lines.append((labels[finding.trend_kind] if fi else finding.trend_kind) + ": " + finding.local_relevance)

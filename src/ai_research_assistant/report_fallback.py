@@ -32,7 +32,10 @@ def compose_fallback(brief, sources, accepted):
                  if fi else "**Limited report:** final synthesis failed. This compilation contains only completed, reviewed results. Missing analysis is not evidence against the idea."),
                 ]
     if findings:
-        sections.append("## " + ("Ratkaisevat havainnot" if fi else "Key findings"))
+        only_background = all(f.get('question_fit') == 'background' for f in findings)
+        if only_background:
+            sections.append('Aineistosta saatiin vain taustatietoa, ei suoraa vastausta tutkimuskysymykseen.' if fi else 'Only background evidence was obtained; it does not directly answer the question.')
+        sections.append("## " + (("Taustahavainnot" if only_background else "Ratkaisevat havainnot") if fi else "Findings"))
     # Summaries are the researcher's reviewed paraphrases. Never publish source_passage/page_text.
     for finding in findings[:6]:
         sections.append(f"- {finding['summary']} [" + ("Lähde" if fi else "Source") + f"]({finding['source']})")

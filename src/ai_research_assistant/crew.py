@@ -20,6 +20,8 @@ from .research_result import ResearchOutputError, NoEvidenceError, ResearchResul
 from .tools.search_tool import SourceSearchTool, SourceReadTool
 from .trend_result import attach_trend_evidence
 from .analysis_result import AnalysisResult, render_analysis
+from .research_contract import parse_research, bind_entities, resolve_comparisons
+from .question_fit import assess_question_fit
 
 
 @CrewBase
@@ -107,6 +109,12 @@ class AiResearchAssistant:
         )
 
     def check_research(self, output: TaskOutput) -> tuple[bool, Any]:
+        if not isinstance(output.pydantic, ResearchResult):
+            parsed, notes = parse_research(output.raw, self.reviewer)
+            self.excluded_findings.extend(notes)
+            if parsed is not None:
+                output.pydantic = parsed
+                output.raw = parsed.model_dump_json()
         # With a guardrail, CrewAI skips initial string-output conversion.
         # Use its own exporter instead of treating valid JSON as malformed.
         if not isinstance(output.pydantic, ResearchResult):
@@ -125,6 +133,10 @@ class AiResearchAssistant:
         # Legacy URL models remain loadable for saved checkpoints, but new
         # model responses must use IDs and provide their private evidence.
         for finding in output.pydantic.findings:
+            finding.source_context = 'unknown'
+            finding.question_fit = 'unassessed'
+            finding.fit_reason = ''
+            finding.entity_id = ''
             if not SOURCE_ID.fullmatch(finding.source):
                 url = resolve_source(finding.source, self.search_tool.sources)
                 if url:
@@ -141,7 +153,6 @@ class AiResearchAssistant:
         # stop here rather than letting an unvalidated result reach the next task.
         if not isinstance(output.pydantic, ResearchResult):
             raise ResearchOutputError("Tutkijan tulos ei vastaa ResearchResult-rakennetta. Tutkimus keskeytettiin ennen seuraavaa vaihetta.")
-        original_urls = {str(HttpUrl(url)): url for url in self.search_tool.sources}
         for finding in output.pydantic.findings:
             url = resolve_source(finding.source, self.search_tool.sources)
             if url:
@@ -152,17 +163,42 @@ class AiResearchAssistant:
         output.pydantic, excluded = assess_findings(output.pydantic, self.search_tool.sources, self.brief, self.reviewer)
         self.excluded_findings.extend(excluded)
         output.pydantic = recover_unused_sources(output.pydantic, self.search_tool.sources, self.brief, self.reviewer)
+        output.pydantic, notes, followup = assess_question_fit(output.pydantic, self.brief, self.reviewer)
+        self.excluded_findings.extend(notes)
+        if followup and self.search_tool.remaining_searches and len(output.pydantic.findings) < 12:
+            try:
+                before = set(self.search_tool.sources)
+                self.search_tool._run(search_query=followup)
+                candidates = [url for url in self.search_tool.sources if url not in before][:3]
+                self.search_tool.read_sources(candidates, purpose='research_question',
+                    reason='Täsmähaku tutkimuskysymykseen vastaavan aineiston löytämiseksi.', stage='research_task')
+                # Source-isolated extraction and factual checks still apply.
+                previous_count = len(output.pydantic.findings)
+                output.pydantic = recover_unused_sources(output.pydantic, self.search_tool.sources,
+                    self.brief, self.reviewer, only_urls=set(candidates))
+                if len(output.pydantic.findings) > previous_count:
+                    output.pydantic, notes, _ = assess_question_fit(output.pydantic, self.brief, self.reviewer)
+                    self.excluded_findings.extend(notes)
+            except Exception as exc:
+                from src.diagnostics import record_failure
+                record_failure(exc, operation='recover_question_gap')
+                self.excluded_findings.append('Tutkimuskysymykseen kohdistuva täsmähaku epäonnistui; aiemmat havainnot säilytettiin.')
         if not output.pydantic.findings:
             self.save_checkpoint(feedback="Lähdeaineistosta ei saatu vahvistettuja havaintoja. Analyysia ei muodostettu.")
             raise NoEvidenceError("No source-backed observations after extraction and bounded recovery")
         for source in self.search_tool.sources.values():
             source["research_findings"] = []
+        original_urls = {str(HttpUrl(url)): url for url in self.search_tool.sources}
         for index, finding in enumerate(output.pydantic.findings, 1):
             url = original_urls[str(finding.source)]
             self.search_tool.sources[url]["research_findings"].append(
                 finding_record(finding, f"F{index}"))
+        bind_entities(evidence_ledger(self.search_tool.sources))
         display = render_research(output.pydantic, self.brief.get("language", "suomi"), self.search_tool.sources, self.excluded_findings)
-        output.raw = json.dumps({"accepted_findings": evidence_ledger(self.search_tool.sources)}, ensure_ascii=False)
+        output.raw = json.dumps({"accepted_findings": evidence_ledger(self.search_tool.sources),
+            "coverage": {"direct": sum(f.question_fit == 'direct' for f in output.pydantic.findings),
+                         "background": sum(f.question_fit == 'background' for f in output.pydantic.findings),
+                         "unassessed": sum(f.question_fit == 'unassessed' for f in output.pydantic.findings)}}, ensure_ascii=False)
         self.accepted_outputs.append({"agent": output.agent, "stage": "research_task", "text": display})
         self.search_tool.set_search_limit(6)
         self.save_checkpoint(feedback="")
@@ -183,7 +219,9 @@ class AiResearchAssistant:
                 output.pydantic, output.json_dict = self.analysis_task()._export_output(output.raw)
             if not isinstance(output.pydantic, AnalysisResult):
                 raise ValueError("Return the required AnalysisResult structure.")
+            output.pydantic = resolve_comparisons(output.pydantic, evidence_ledger(self.search_tool.sources))
             output.pydantic.validate_evidence(evidence_ledger(self.search_tool.sources), self.brief)
+            output.raw = output.pydantic.model_dump_json()
         except (ValueError, TypeError) as exc:
             self.save_checkpoint(feedback=str(exc))
             return False, str(exc)

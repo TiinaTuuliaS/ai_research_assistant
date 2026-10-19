@@ -15,6 +15,9 @@ research_task:
     Tukitekstin on tuettava koko havaintoa; älä lainaa tietoa muilta sivuilta.
     Säilytä hinnan palvelumalli, yksikkö, vuokrajakso, provisio ja muut ehdot.
     Yrityksen oma laatulupaus on markkinointiväite, ei riippumaton arvio.
+    Lue tukilauseen asiayhteys: tulevaisuusvisio on forecast, vaikka se olisi
+    kirjoitettu menneessä aikamuodossa. Asiakaskokemus kertoo yhden asiakkaan
+    kokemuksesta, ei palvelun yleisestä laadusta. Säilytä väitteen esittäjä.
     Jos page_status ei ole retrieved, käytössä on vain hakukatkelma.
     Julkaisu- ja hakupäivä eivät ole havainnon ajankohta.
     Älä tee päätelmiä, vertailuetuja tai suosituksia. Ne kuuluvat analyytikolle.
@@ -35,6 +38,11 @@ analysis_task:
     Alue ja asiakkaat: {target_market}.
     Tehtäväsi: {analysis_task_deliverable}
     Muodosta päätelmät vain kontekstin hyväksytyistä havainnoista.
+    question_fit erottaa suoraan kysymykseen vastaavat havainnot (direct)
+    taustatiedosta (background). Taustatieto ei ratkaise kysymystä; unassessed
+    tarkoittaa tarkistamatonta osuvuutta. Kerro coverage-kentän osoittama puute.
+    source_context säilyttää lähteen tiedon luonteen: visio, lupaus ja
+    yksittäinen asiakaskokemus eivät muutu todennetuksi nykytilaksi.
     Käyttäjän suunnitelma ei ole todennettu markkinatieto eikä lähteissä nimetty yritys.
     Liitä jokaiseen päätelmään sitä tukevat finding_ids ja olennainen epävarmuus.
     Hintavertailu vaatii samat palvelut, yksiköt ja ehdot; muuten kuvaa hinnat erikseen.
@@ -53,8 +61,11 @@ analysis_task:
     viittaa hyväksyttyihin havaintoihin ja uncertainty kertoo rajat.
     recommendation ja alternative kuvaavat toimintavaihtoehtoja tai miksi
     valintaa ei voi vielä tehdä. gaps nimeää ratkaisevat puuttuvat tiedot.
-    Vain kilpailijavertailussa comparisons saa sisältää havaintojen entity-kenttää
-    vastaavan competitor-nimen, feature, finding_ids, limitation ja status:
+    Vain kilpailijavertailussa comparisons sisältää competitor_id-tunnisteen
+    hyväksyttyjen havaintojen entity_id-kentästä (E1 jne.), feature, finding_ids,
+    limitation ja status. Ohjelma ratkaisee yrityksen nimen tunnisteesta.
+    Jos toimijan tunniste on tyhjä, jätä yritysvertailu pois ja kirjaa puute.
+    status on:
     shared (vertailussa osoitettu yhteinen ominaisuus), evidenced_difference
     (molemmista osapuolista tuettu ero), proposal (testattava ehdotus) tai
     unknown (vertailuasema selvittämättä). Listat saavat jäädä tyhjiksi.
