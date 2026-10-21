@@ -9,10 +9,8 @@ jest.mock("./components/History", () => () => <p>Private research history</p>);
 
 const unauthorized = () => Promise.reject(Object.assign(new Error("Unauthorized"), { status: 401 }));
 const fillBrief = () => {
-  fireEvent.change(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?"), { target: { value: "Uusi palvelu" } });
-  fireEvent.change(screen.getByLabelText(/Mihin arjen tarpeeseen idea voisi vastata/), { target: { value: "Testaa kysyntää" } });
-  fireEvent.change(screen.getByLabelText(/Keitä asiakkaasi ovat/), { target: { value: "Suomi, pienyritykset" } });
-  fireEvent.change(screen.getByLabelText(/Kokeilubudjetti/), { target: { value: "0" } });
+  fireEvent.change(screen.getByLabelText("Mitä tuotteita tai palveluja vertaillaan?"), { target: { value: "Uusi palvelu" } });
+  fireEvent.change(screen.getByLabelText(/Keitä asiakkaita tarkastellaan/), { target: { value: "Suomi, pienyritykset" } });
 };
 
 beforeEach(() => {
@@ -24,7 +22,7 @@ test("public landing is visible even before the session request finishes", () =>
   api.mockReturnValue(new Promise(() => {}));
   render(<App />);
   expect(screen.getByRole("heading", { name: /AI Markkinatutkimusassistentti/ })).toBeInTheDocument();
-  expect(screen.getByText("Uuden liikeidean kysynnän testaus")).toBeInTheDocument();
+  expect(screen.getByText("Coworking-palvelujen tarjonnan vertailu")).toBeInTheDocument();
 });
 
 test("anonymous users can see the example, but cannot start research", async () => {
@@ -62,13 +60,12 @@ test("brief survives signup, login and return; only an explicit click starts res
   fireEvent.change(screen.getByLabelText("Salasana"), { target: { value: "test-password-123" } });
   fireEvent.click(screen.getByRole("button", { name: "Kirjaudu" }));
   const run = await screen.findByRole("button", { name: /Aloita tutkimus/ });
-  expect(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?")).toHaveValue("Uusi palvelu");
-  expect(screen.getByLabelText(/Kokeilubudjetti/)).toHaveValue(0);
+  expect(screen.getByLabelText("Mitä tuotteita tai palveluja vertaillaan?")).toHaveValue("Uusi palvelu");
   expect(api.mock.calls.some(([path]) => path === "/research-jobs")).toBe(false);
   fireEvent.click(run);
   await screen.findByText("Valmis suunnitelma");
   const request = api.mock.calls.find(([path]) => path === "/research-jobs")[1];
-  expect(JSON.parse(request.body)).toEqual({ research_type: "demand", topic: "Uusi palvelu", goal: "", problem: "Testaa kysyntää", competitors: "", target_market: "Asiakkaat: Suomi, pienyritykset. Alue: ei määritelty.", budget_eur: 0, language: "suomi" });
+  expect(JSON.parse(request.body)).toEqual({ research_type: "competition", topic: "Uusi palvelu", goal: "", competitors: "", target_market: "Asiakkaat: Suomi, pienyritykset. Alue: ei määritelty.", language: "suomi" });
 });
 
 test("history requires login and returns to history afterwards", async () => {
@@ -90,14 +87,14 @@ test("logout clears the brief and keeps the public landing visible", async () =>
   fillBrief();
   fireEvent.click(screen.getByRole("button", { name: "Kirjaudu ulos" }));
   await screen.findByRole("button", { name: /Kirjaudu ja jatka/ });
-  expect(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?")).toHaveValue("");
+  expect(screen.getByLabelText("Mitä tuotteita tai palveluja vertaillaan?")).toHaveValue("");
   expect(sessionStorage.getItem("research-draft")).toBeNull();
   expect(screen.getByRole("heading", { name: /AI Markkinatutkimusassistentti/ })).toBeInTheDocument();
 });
 
 test("restores an unfinished brief after refresh", async () => {
-  sessionStorage.setItem("research-draft", JSON.stringify({ idea: "Tallessa", problem: "Tavoite", audience: "Suomi", budget_eur: "150" }));
+  sessionStorage.setItem("research-draft", JSON.stringify({ research_type: "competition", solution: "Tallessa", competition_market: "Suomi" }));
   api.mockImplementation(unauthorized);
   render(<App />);
-  await waitFor(() => expect(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?")).toHaveValue("Tallessa"));
+  await waitFor(() => expect(screen.getByLabelText("Mitä tuotteita tai palveluja vertaillaan?")).toHaveValue("Tallessa"));
 });

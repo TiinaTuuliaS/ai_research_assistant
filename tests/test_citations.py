@@ -24,6 +24,12 @@ class CitationTests(unittest.TestCase):
         self.assertIn("hakutuloskatkelmia", report)
         self.assertIn("Kartoitus ei ole kattava", report)
 
+    def test_one_source_is_enough_for_a_narrow_report_but_no_citations_is_rejected(self):
+        valid, report = validate_citations("Havainto [One](https://one.test/report).\n\n## Lähteet\n", self.sources)
+        self.assertTrue(valid)
+        self.assertNotIn("Suppea lähdepohja", report)
+        self.assertFalse(validate_citations("Ei viitteitä.\n\n## Lähteet\n", self.sources)[0])
+
     def test_rejects_fabricated_sources(self):
         self.assertFalse(validate_citations(self.report.replace("two.test", "invented.test"), self.sources)[0])
 
@@ -57,7 +63,7 @@ class CitationTests(unittest.TestCase):
         valid, result = validate_citations(annotated, self.sources, require_evidence_notes=True)
         self.assertTrue(valid)
         self.assertIn(note.strip(" —"), result)
-        self.assertIn("Suppea lähdepohja", result)
+        self.assertNotIn("Suppea lähdepohja", result)
 
     def test_requires_inline_sources_and_bibliography(self):
         self.assertFalse(validate_citations("## Lähteet\n" + self.report.split("## Lähteet")[1], self.sources)[0])

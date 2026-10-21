@@ -28,8 +28,8 @@ def _validate_citations(raw: str, sources: dict[str, dict[str, str]], *, require
     bibliography = raw[heading.end():]
     body_urls = {url for _, url in LINK.findall(body)}
     all_urls = {url for _, url in LINK.findall(raw)}
-    if len(body_urls) < 2:
-        return False, "Cite at least two distinct retrieved sources inline beside factual claims. Use [title](https://...) links."
+    if not body_urls:
+        return False, "Cite a retrieved source inline beside factual claims; one source is sufficient for a narrow report. Use [title](https://...) links."
     if all_urls - sources.keys():
         return False, "Use only exact URLs from citation_sources returned by the search tool. Do not invent URLs."
     # Also reject bare URLs and Markdown reference links not observed in this run.
@@ -82,9 +82,6 @@ def _validate_citations(raw: str, sources: dict[str, dict[str, str]], *, require
             # above; the pre-reading rationale may contain rejected assumptions.
             reason = re.sub(r"[\[\]<>\r\n]", " ", reasons[0])
             entries[-1] += (" Valintaperuste: " if finnish else "Selection rationale: ") + reason
-    if len(body_urls) < 5:
-        entries.append("\n**Suppea lähdepohja:** raportissa on alle viisi tekstissä käytettyä lähdettä. Tarkista erityisesti, löytyykö väitteille riippumatonta näyttöä."
-                       if finnish else "\n**Limited source base:** fewer than five sources are cited inline. Check whether independent evidence supports the claims.")
     note = (
         "Aineisto sisältää hakutuloskatkelmia ja erikseen merkittyjen lähteiden rajattuja sivutekstejä. "
         "Kartoitus ei ole kattava: löydetyt toimijat eivät ole alueen kokonaismäärä, "

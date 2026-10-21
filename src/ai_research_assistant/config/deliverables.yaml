@@ -1,31 +1,14 @@
-demand:
-  research_task: >
-    Selvitä ideaan liittyvä tarve, nykyinen tarjonta ja asiakkaiden toiminnasta
-    kertovat havainnot. Erota toteutunut käyttö ja ostot yritysten lupauksista.
-    Etsi kysymyksen kannalta olennaiset vaihtoehdot. Tarjonta ei todista
-    kysyntää, eikä puuttuva kysyntätieto todista kysynnän puuttumista.
-  analysis_task: >
-    Vastaa, millaista näyttöä idean kysynnästä löytyi. Erota suora näyttö,
-    epäsuorat merkit ja avoimet kysymykset. Punnitse ideaa puoltavat ja vastaan
-    puhuvat havainnot. Kerro mitä aineiston perusteella voi päättää ja mitä ei;
-    mahdollinen kokeilu on oma ehdotus, ei lähteestä löydetty tosiasia.
-    Älä keksi asiakastarvetta tai yrityksen nimeä. comparisons on tyhjä lista.
-  report_task: >
-    Vastaa siihen, millaista näyttöä idean kysynnästä löytyi ja mitä jäi avoimeksi.
-    Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset havainnot",
-    "Näytön vahvuus ja puutteet", "Mitä kannattaa tehdä seuraavaksi" ja "Lähteet".
-    Erota todettu kysyntä, epäsuorat merkit ja omat ehdotukset. Älä lupaa menestystä
-    tai suosittele hylkäämistä vain siksi, ettei verkkohaku löytänyt kysyntätietoa.
 competition:
   research_task: >
-    Etsi ratkaisulle nimetyt vaihtoehdot oikealta alueelta sekä olennaiset
+    Etsi aiheeseen sopivat nimetyt vaihtoehdot oikealta alueelta sekä olennaiset
     vertailukohteet muualla. Selvitä mitä asiakas saa, kenelle tarjonta sopii,
     saatavuus ja ilmoitettu hinta. Sovita vertailuperusteet toimialaan.
     Suosi toimijoiden alkuperäisiä palvelu-, tuote- ja hinnastosivuja.
     Etsi myös dokumentoituja muutoksia tarjonnassa ja valintaperusteissa.
     Tuntematon tieto jää tuntemattomaksi; tuotejulkaisu ei osoita suosiota.
   analysis_task: >
-    Vertaa käyttäjän suunnitelmaa nimettyihin ulkopuolisiin vaihtoehtoihin.
+    Vertaa nimettyjen vaihtoehtojen tarjontaa käyttäjän kysymyksen ja kriteerien perusteella.
+    Arvioi käyttäjän oman suunnitelman erottumista vain, jos käyttäjä pyytää sitä.
     Täytä comparisons vain lähteillä tuetuista vertailukohteista. Kerro
     konkreettinen ominaisuus ja onko se yhteinen, osoitettu ero, testattava
     ehdotus vai tuntematon. Puuttuva tieto ei osoita kilpailijan puutetta.
@@ -34,11 +17,12 @@ competition:
     Suosittele suuntaa aineiston sallimissa rajoissa; myös valinnan lykkääminen on sallittua.
     Asiakashyöty on oletus ilman suoraa näyttöä; älä keksi parempaa laatua tai hintaa.
   report_task: >
-    Vastaa siihen, miten ratkaisu voisi erottua löydetyistä vaihtoehdoista.
-    Käytä otsikoita "Vastaus kysymykseesi", "Keskeiset erot",
-    "Näytön vahvuus ja puutteet", "Suositeltava suunta" ja "Lähteet".
+    Vastaa käyttäjän vertailukysymykseen. Käsittele oman ratkaisun erottumista
+    vain, jos käyttäjä pyytää sitä.
+    Käytä otsikoita "Vastaus kysymykseesi", "Tarjonnan vertailu",
+    "Näytön vahvuus ja puutteet", "Johtopäätös" ja "Lähteet".
     Säilytä ero yhteisen ominaisuuden, osoitetun eron ja testattavan ehdotuksen
-    välillä. Nimeä vertailtava toimija ja ehdotuksen haittapuoli.
+    välillä. Nimeä vertailtavat toimijat. Jos esität ehdotuksen, kerro sen haittapuoli.
     Käsittele ajallista kehitystä vain, jos se auttaa vastaamaan kysymykseen.
 market:
   research_task: >

@@ -56,7 +56,7 @@ function History({ user }) {
   }
 
   return (
-    <div style={styles.page}>
+    <div className="history-page">
       <h1>📜 Omat raportit</h1>
       <button className="button subtle" disabled={loading} onClick={() => setAttempt(n => n + 1)}>Päivitä lista</button>
       {loading && <p role="status">Ladataan historiaa…</p>}
@@ -65,7 +65,7 @@ function History({ user }) {
 
       {/* 🔥 VALITTU */}
       {selected && (
-        <div style={styles.selectedCard}>
+        <div className="history-selected">
           <h2>📄 {selected.topic}</h2>
           <ResearchDate value={selected.created_at} />
           {selected.status && selected.status !== "completed"
@@ -83,7 +83,7 @@ function History({ user }) {
           {group.items.map((r) => (
         <motion.div
           key={r.id}
-          style={styles.card}
+          className="history-card"
           whileHover={{ scale: 1.02 }}
           onClick={() => setSelected(r)}
           >
@@ -100,30 +100,5 @@ function History({ user }) {
     </div>
   );
 }
-
-const styles = {
-  page: {
-    padding: "30px",
-    maxWidth: "800px",
-    margin: "auto"
-  },
-
-  selectedCard: {
-    background: "var(--tint)",
-    padding: "20px",
-    borderRadius: "12px",
-    marginBottom: "20px",
-    border: "2px solid var(--secondary)"
-  },
-
-  card: {
-    background: "var(--surface)",
-    padding: "20px",
-    borderRadius: "12px",
-    marginBottom: "20px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.05)",
-    cursor: "pointer"
-  }
-};
 
 export default History;

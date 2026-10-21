@@ -60,7 +60,7 @@ class ReportRetryTests(unittest.TestCase):
             assistant = AiResearchAssistant()
             valid, feedback = assistant.check_sources(TaskOutput(description="Report", agent="Writer", raw="Draft"))
             self.assertFalse(valid)
-            self.assertIn("at least two", feedback)
+            self.assertIn("Cite a retrieved source", feedback)
             self.assertIn('"retrieved_evidence": []', feedback)
 
     def test_second_content_review_correction_becomes_retry_draft(self):

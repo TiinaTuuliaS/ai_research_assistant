@@ -113,7 +113,7 @@ class EvidenceTests(unittest.TestCase):
             "scope_supported": True, "single_source_supported": False,
             "reason": "Tarjonta ei osoita toteutunutta kysyntää."}]}
         result, excluded = assess_findings(self.result(summary="Tämä on suoraa näyttöä kysynnästä.",
-            evidence_kind="usage"), self.sources(), {"research_type": "demand", "language": "suomi"}, reviewer)
+            evidence_kind="usage"), self.sources(), {"research_type": "market", "language": "suomi"}, reviewer)
         self.assertEqual(result.findings, [])
         self.assertIn("Tarjonta ei osoita", excluded[0])
         request = json.loads(reviewer.call.call_args.args[0][1]["content"])
@@ -209,7 +209,7 @@ class EvidenceTests(unittest.TestCase):
         sources = self.sources()
         sources["https://example.test/services"]["research_findings"] = [
             {"finding_id": "F1", **self.finding().model_dump(mode="json")}]
-        for mode in ("demand", "competition", "market"):
+        for mode in ("competition", "market"):
             with self.subTest(mode=mode):
                 ok, _ = review_output("Aineisto ei riitä johtopäätökseen.", sources=sources,
                     brief={"research_type": mode}, previous=[], reviewer=reviewer, final_report=True)

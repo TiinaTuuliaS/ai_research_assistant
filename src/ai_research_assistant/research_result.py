@@ -33,7 +33,7 @@ class ResearchFinding(BaseModel):
     period_support: str = Field(default="", max_length=500,
         description="Exact source passage supporting the observation period. Empty if period is unknown; publication and retrieval dates are not observation periods.")
     relevance: int = Field(strict=True, ge=1, le=10,
-                           description="Relevance to the user's topic, not confidence or proof of demand")
+                           description="Relevance to the user's topic, not confidence or source reliability")
     # Server-owned evidence, deliberately absent from the model's output schema
     # and from serialization/UI. Old stored findings can still be loaded.
     evidence_excerpt: SkipJsonSchema[str] = Field(default="", exclude=True)
@@ -116,8 +116,8 @@ def render_research(result: ResearchResult, language: str = "suomi", sources: di
             labels = {"observed_change": "Havaittu muutos", "forecast": "Ennuste", "example": "Esimerkki"}
             lines.append((labels[finding.trend_kind] if fi else finding.trend_kind) + ": " + finding.local_relevance)
     if result.findings:
-        lines.append("Osuvuus kuvaa yhteyttä aiheeseen, ei lähteen luotettavuutta tai kysynnän vahvuutta."
-                     if fi else "Relevance measures fit to the topic, not source reliability or strength of demand.")
+        lines.append("Osuvuus kuvaa yhteyttä aiheeseen, ei lähteen luotettavuutta."
+                     if fi else "Relevance measures fit to the topic, not source reliability.")
     lines.append("Kartoitus ei ole kattava. Löydetyt toimijat ovat esimerkkejä, eivät alueen kokonaismäärä. "
                  "Hakutuloksista puuttuminen ei osoita, ettei toimijaa tai palvelua ole olemassa."
                  if fi else "This search is not exhaustive. Found providers are examples, not the area's total. "

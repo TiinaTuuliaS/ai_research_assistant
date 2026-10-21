@@ -13,7 +13,7 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("## Näytön vahvuus ja puutteet", description)
         self.assertIn("## Lähteet", description)
         contracts = yaml.safe_load((config_dir / "deliverables.yaml").read_text(encoding="utf-8"))
-        self.assertEqual(set(contracts), {"demand", "competition", "market"})
+        self.assertEqual(set(contracts), {"competition", "market"})
         for mode, outputs in contracts.items():
             self.assertEqual(set(outputs), set(tasks))
             self.assertEqual(len(set(outputs.values())), 3)
@@ -29,7 +29,7 @@ class ConfigurationTests(unittest.TestCase):
         from unittest.mock import patch
         from src.ai_research_assistant.crew import AiResearchAssistant
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test-not-used", "SERPER_API_KEY": "test-not-used"}):
-            for mode in ("demand", "competition", "market"):
+            for mode in ("competition", "market"):
                 assistant = AiResearchAssistant()
                 crew = assistant.crew()
                 inputs = assistant.prepare({"research_type": mode, "topic": "Test", "language": "suomi", "current_year": "2026"})
@@ -46,3 +46,11 @@ class ConfigurationTests(unittest.TestCase):
             self.assertEqual(assistant.prepare({})["research_type"], "market")
             with self.assertRaises(ValueError):
                 assistant.prepare({"research_type": "invalid"})
+
+    def test_removed_mode_is_rejected_before_agent_execution(self):
+        import os
+        from unittest.mock import patch
+        from src.ai_research_assistant.crew import AiResearchAssistant
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}):
+            with self.assertRaisesRegex(ValueError, "Unknown research type"):
+                AiResearchAssistant().prepare({"research_type": "demand"})

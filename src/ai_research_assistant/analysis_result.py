@@ -26,7 +26,7 @@ class Comparison(BaseModel):
 
 class AnalysisResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    research_type: Literal["demand", "competition", "market"]
+    research_type: Literal["competition", "market"]
     topic: NonEmptyText
     answer: Conclusion
     conclusions: list[Conclusion] = Field(max_length=6)
@@ -51,7 +51,11 @@ class AnalysisResult(BaseModel):
                 for field in ("supporting_text", "period_support")
             )
             years = lambda text: set(re.findall(r"\b(?:19|20)\d{2}\b", text))
-            if years(conclusion.statement) - years(support):
+            # Explicit evidence-gap sentences may name the requested period.
+            # Check remaining sentences separately so a caveat cannot shelter a factual claim.
+            factual = " ".join(sentence for sentence in re.split(r"(?<=[.!?])\s+", conclusion.statement)
+                if not re.match(r"(?i)^(?:aineisto ei (?:riitä|osoita|vahvista)|tämän aineiston perusteella ei voida|the evidence (?:does not|cannot)|this evidence (?:does not|cannot))\b", sentence.strip()))
+            if years(factual) - years(support):
                 raise ValueError("The conclusion adds a year absent from its referenced evidence. "
                                  "Narrow the statement to the supported dates; put the requested "
                                  "but unverified time range in gaps, not in a factual conclusion.")

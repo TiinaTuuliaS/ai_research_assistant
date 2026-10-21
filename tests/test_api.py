@@ -166,16 +166,33 @@ class AuthenticationTests(unittest.TestCase):
             self.client.post("/research", json={"topic": "Service"})
             generate.assert_called_once_with("Service", "suomi", "", "", None)
 
+    def test_archived_demand_report_stays_readable_and_cannot_restart_removed_mode(self):
+        from types import SimpleNamespace
+        owner = self.register_login().json()["user_id"]
+        with self.sessions() as db:
+            db.add(Research(topic="Vanha kysyntätutkimus", result="Alkuperäinen raportti", user_id=owner))
+            db.commit()
+        history = self.client.get("/researches").json()
+        self.assertEqual(history[0]["result"], "Alkuperäinen raportti")
+        saved = SimpleNamespace(inputs={"research_type": "demand", "current_year": "2026"},
+            sources={"source": {}}, draft="Draft", feedback="Review")
+        steps = [{"key": key, "status": "completed", "output": "Saved"}
+                 for key in ("researcher", "analyst", "writer")]
+        self.assertFalse(api.retry_available(SimpleNamespace(status="failed", steps=steps), saved))
+
     def test_research_modes_change_agent_brief(self):
         self.register_login()
-        for mode, expected in [("demand", "Assess demand"), ("competition", "Compare competitors"), ("market", "Map this industry")]:
+        for mode, expected in [("competition", "Compare named alternatives"), ("market", "Map this industry")]:
             with patch.object(api, "generate_report", return_value="Report") as generate:
-                response = self.client.post("/research", json={"topic": "Service", "research_type": mode, "problem": "Customer pain", "competitors": "Company A", "goal": "Recent changes"})
+                response = self.client.post("/research", json={"topic": "Service", "research_type": mode, "competitors": "Company A", "goal": "Recent changes"})
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(expected, generate.call_args.args[2])
                 self.assertIn("Recent changes", generate.call_args.args[2])
                 self.assertEqual(generate.call_args.kwargs["research_type"], mode)
         self.assertEqual(self.client.post("/research", json={"topic": "Service", "research_type": "unknown"}).status_code, 422)
+        with patch.object(api, "generate_report") as generate:
+            self.assertEqual(self.client.post("/research", json={"topic": "Service", "research_type": "demand"}).status_code, 422)
+            generate.assert_not_called()
 
     def test_logout_during_research_prevents_save(self):
         self.register_login()
@@ -386,7 +403,7 @@ class AuthenticationTests(unittest.TestCase):
         from src.ai_research_assistant.report_fallback import compose_fallback
         sources = {"https://example.test/": {"title": "Palvelut", "research_findings": [
             {"summary": "Tarjontaa löytyi.", "source": "https://example.test/", "limitations": ["Kysyntä ei selviä."]}]}}
-        report = compose_fallback({"research_type": "demand"}, sources, [])
+        report = compose_fallback({"research_type": "market"}, sources, [])
         with patch.object(api, "generate_report", return_value=report):
             started = self.client.post("/research-jobs", json={"topic": "Test"}).json()
         saved = self.client.get(f"/research-jobs/{started['id']}").json()

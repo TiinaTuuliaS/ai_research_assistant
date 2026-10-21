@@ -41,7 +41,7 @@ class AnalysisTests(unittest.TestCase):
         from crewai import Agent
         from src.ai_research_assistant.crew import AiResearchAssistant
         from src.ai_research_assistant.research_result import ResearchFinding, ResearchResult
-        for mode in ("demand", "competition", "market"):
+        for mode in ("competition", "market"):
             with self.subTest(mode=mode), patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \
                  patch("src.ai_research_assistant.crew.assess_findings", side_effect=lambda result, *args: (result, [])), \
                  patch("src.ai_research_assistant.crew.review_output", side_effect=lambda raw, **kwargs: (True, raw)):
@@ -94,7 +94,7 @@ class AnalysisTests(unittest.TestCase):
 
     def test_all_modes_preserve_topic_and_bind_answer_to_evidence(self):
         ledger = [dict(finding_id="F1", source="https://example.test/", entity="Competitor")]
-        for mode in ("demand", "competition", "market"):
+        for mode in ("competition", "market"):
             result = analysis_fixture(mode=mode, ids=["F1"])
             brief = dict(topic="Test", research_type=mode)
             result.validate_evidence(ledger, brief)

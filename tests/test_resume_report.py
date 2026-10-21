@@ -70,4 +70,4 @@ class ResumeReportTests(unittest.TestCase):
                 resume_report({"topic": "Test", "language": "suomi", "current_year": "2026"}, sources,
                               steps, lambda *args: None, lambda **values: saved.update(values), draft, "Missing citations")
         self.assertEqual(saved["draft"], draft)
-        self.assertIn("at least two", saved["feedback"])
+        self.assertIn("Cite a retrieved source", saved["feedback"])

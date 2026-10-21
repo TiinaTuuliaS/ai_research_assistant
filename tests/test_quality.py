@@ -64,7 +64,7 @@ class QualityTests(unittest.TestCase):
         reviewer = Mock()
         reviewer.call.return_value = QualityReview(issues=[])
         text = "Testattava ehdotus: iltapalvelu. Kilpailijoiden aukioloajoista ei ole tietoa."
-        for mode in ("competition", "demand", "market"):
+        for mode in ("competition", "market"):
             with self.subTest(mode=mode):
                 self.assertEqual(review_output(text, sources={}, brief={"research_type": mode},
                                                previous=[], reviewer=reviewer), (True, text))

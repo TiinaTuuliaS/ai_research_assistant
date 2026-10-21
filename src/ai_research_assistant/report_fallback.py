@@ -15,12 +15,9 @@ def compose_fallback(brief, sources, accepted):
     fi = brief.get("language") != "english"
     mode = brief.get("research_type", "market")
     conclusions = {
-        "demand": ("Idean kysyntää ei tämän rajatun koosteen perusteella voi vahvistaa eikä sulkea pois. "
-                   "Laajaa toteutuspäätöstä ei kannata perustaa yksin tähän aineistoon.",
-                   "This limited report cannot confirm or rule out demand. A substantial commitment should not rely on this evidence alone."),
-        "competition": ("Aineisto auttaa vertaamaan löydettyjä vaihtoehtoja, mutta ei yksin osoita ratkaisusi kilpailuetua. "
-                        "Erottautumista koskeva päätös jää ehdolliseksi, kunnes vertailtava ero on vahvistettu.",
-                        "The evidence helps compare alternatives but does not alone establish a competitive advantage. A differentiation decision remains conditional on a verified difference."),
+        "competition": ("Aineisto auttaa vertaamaan löydettyjä vaihtoehtoja. "
+                        "Puuttuvia hinta- ja palveluehtoja ei pidä tulkita osoitetuiksi eroiksi.",
+                        "The evidence helps compare alternatives. Missing price and service terms are not demonstrated differences."),
         "market": ("Aineistosta voi muodostaa rajatun tilannekuvan. Sen perusteella ei pidä olettaa koko markkinan suuntaa tai kokoa. "
                    "Päätöksessä kannattaa erottaa tässä kuvatut havainnot koko markkinaa koskevista oletuksista.",
                    "The evidence provides a limited snapshot, not the size or direction of the whole market. Base decisions on the observations below rather than assuming they describe the entire market."),

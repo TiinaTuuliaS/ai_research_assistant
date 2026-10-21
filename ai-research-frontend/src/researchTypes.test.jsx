@@ -2,58 +2,39 @@ import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
-import { emptyDraft } from "./researchDraft";
-import { researchPayload, researchPreview } from "./researchTypes";
+import { emptyDraft, readDraft, saveDraft } from "./researchDraft";
+import { researchTypes, researchPayload, researchPreview } from "./researchTypes";
 jest.mock("react-markdown", () => ({ children }) => <div>{children}</div>);
 function Form() {
   const [draft, setDraft] = useState(emptyDraft);
   return <MemoryRouter><Dashboard draft={draft} setDraft={setDraft} /></MemoryRouter>;
 }
-test("choices change fields and preserve each mode's unfinished answers", () => {
+test("two choices preserve unfinished answers without offering demand research", () => {
+  expect(researchTypes.map(t => t.id)).toEqual(["competition", "market"]);
   render(<Form />);
-  fireEvent.change(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?"), { target: { value: "Oma idea" } });
-  fireEvent.click(screen.getByRole("button", { name: /Miten erotun kilpailijoista/ }));
-  expect(screen.queryByLabelText("Mitä tuotteesi tai palvelusi tekee?")).not.toBeInTheDocument();
-  expect(screen.getByLabelText(/Tunnetut kilpailijat/)).not.toBeRequired();
-  fireEvent.click(screen.getByRole("button", { name: /Mitä tällä markkinalla tapahtuu/ }));
-  expect(screen.getByLabelText(/Mitä aluetta tarkastellaan/)).not.toBeRequired();
-  fireEvent.click(screen.getByRole("button", { name: /Onko idealleni kysyntää/ }));
-  expect(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?")).toHaveValue("Oma idea");
+  const label = "Mitä tuotteita tai palveluja vertaillaan?";
+  fireEvent.change(screen.getByLabelText(label), { target: { value: "Pyörähuollot" } });
+  fireEvent.click(screen.getByRole("button", { name: /Markkinan tilannekuva ja kehitys/ }));
+  expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Kilpailutarjonnan kartoitus/ }));
+  expect(screen.getByLabelText(label)).toHaveValue("Pyörähuollot");
+  expect(screen.queryByRole("button", { name: /Onko idealleni kysyntää/ })).not.toBeInTheDocument();
 });
-test("only the selected mode's context reaches the server", () => {
-  const draft = { ...emptyDraft, research_type: "competition", solution: "Palvelu", competition_market: "Suomi", competitors: "Yritys A", problem: "Hidden demand context", question: "Hidden market context" };
-  expect(researchPayload(draft)).toMatchObject({ research_type: "competition", topic: "Palvelu", target_market: "Asiakkaat: Suomi. Alue: ei määritelty.", competitors: "Yritys A", problem: "", goal: "", budget_eur: null });
+test("only selected context reaches the API", () => {
+  const payload = researchPayload({ ...emptyDraft, solution: "Huolto", competitors: "A", criteria: "Hinta", problem: "old demand", question: "other mode" });
+  expect(payload).toMatchObject({research_type: "competition", topic: "Huolto", competitors: "A", goal: "Vertailuperusteet: Hinta"});
+  expect(payload).not.toHaveProperty("problem");
+  expect(JSON.stringify(payload)).not.toContain("old demand");
 });
-
-test("preview follows the selected topic and openly identifies missing scope", () => {
-  render(<Form />);
-  const preview = screen.getByRole("region", { name: "Tutkimuskysymyksen esikatselu" });
-  expect(preview).toHaveTextContent("Alue jäi määrittelemättä.");
-  fireEvent.change(screen.getByLabelText("Mitä tuotteesi tai palvelusi tekee?"), { target: { value: "Älypuhelimen käytön verkkokurssi" } });
-  fireEvent.change(screen.getByLabelText(/Keitä asiakkaasi ovat/), { target: { value: "Eläkeläiset" } });
-  fireEvent.change(screen.getByLabelText(/Mitä aluetta tarkastellaan/), { target: { value: "Suomi" } });
-  expect(preview).toHaveTextContent("Älypuhelimen käytön verkkokurssi");
-  expect(preview).toHaveTextContent("Asiakkaat: Eläkeläiset. Alue: Suomi.");
-  expect(preview).not.toHaveTextContent("Alue jäi määrittelemättä.");
+test("market period and gaps follow the selected mode", () => {
+  const draft = {...emptyDraft, research_type: "market", industry: "Huoltopalvelut", market_focus: "changes", period: "2023–2026"};
+  expect(researchPayload(draft).goal).toContain("2023–2026");
+  expect(researchPreview({...draft, period: ""}).gaps).toContain("Muutoksen tarkastelujakso jäi avoimeksi.");
 });
-
-test("mode-specific refinements reach the request without leaking other modes", () => {
-  const base = { ...emptyDraft, idea: "Kurssi", audience: "Eläkeläiset", demand_region: "Suomi", payer: "Omainen", criteria: "Hinta", period: "2023–2026" };
-  expect(researchPayload(base).goal).toContain("Omainen");
-  const competition = researchPayload({ ...base, research_type: "competition", solution: "Pyörähuolto", competition_market: "Työmatkapyöräilijät", competition_region: "Tampere" });
-  expect(competition.goal).toBe("Vertailuperusteet: Hinta");
-  expect(competition.target_market).toContain("Tampere");
-  expect(competition.goal).not.toContain("Omainen");
-  const marketDraft = { ...base, research_type: "market", industry: "Verkkokurssit", market_focus: "changes", market_audience: "Kuluttajat", region: "Suomi" };
-  const market = researchPayload(marketDraft);
-  expect(market.goal).toContain("2023–2026");
-  expect(market.goal).toContain("ajoitettua näyttöä");
-  expect(researchPreview({ ...marketDraft, period: "" }).gaps).toContain("Muutoksen tarkastelujakso jäi avoimeksi.");
-});
-
-test("new scope fields survive a draft save and restore", () => {
-  const { saveDraft, readDraft } = require("./researchDraft");
-  saveDraft({ ...emptyDraft, demand_region: "Suomi", payer: "Omainen", criteria: "Hinta", market_focus: "changes", period: "2023–2026" });
-  expect(readDraft()).toMatchObject({ demand_region: "Suomi", payer: "Omainen", criteria: "Hinta", market_focus: "changes", period: "2023–2026" });
+test("removed demand draft resets instead of being submitted as a comparison", () => {
+  sessionStorage.setItem("research-draft", JSON.stringify({research_type: "demand", idea: "Old idea", topic: "Old"}));
+  expect(readDraft()).toEqual(emptyDraft);
+  saveDraft({...emptyDraft, research_type: "market", industry: "Huolto", period: "2023–2026"});
+  expect(readDraft()).toMatchObject({research_type: "market", industry: "Huolto", period: "2023–2026"});
   sessionStorage.clear();
 });

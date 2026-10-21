@@ -10,7 +10,7 @@ function validationMessage(details, path) {
   if (details.some(item => item.type === "extra_forbidden")) {
     return "Palvelin ei tunnista lomakkeen kenttiä. Käyttöliittymän ja palvelimen versiot eivät vastaa toisiaan. Käynnistä backend uudelleen ja päivitä sivu.";
   }
-  const labels = { topic: "Tutkimusaihe", goal: "Tutkimuskysymys", target_market: "Kohdemarkkina", budget_eur: "Budjetti", problem: "Asiakkaan ongelma", competitors: "Kilpailijat", research_type: "Tutkimustyyppi", email: "Sähköposti tai käyttäjätunnus", password: "Salasana" };
+  const labels = { topic: "Tutkimusaihe", goal: "Tutkimuskysymys", target_market: "Kohdemarkkina", budget_eur: "Budjetti", competitors: "Kilpailijat", research_type: "Tutkimustyyppi", email: "Sähköposti tai käyttäjätunnus", password: "Salasana" };
   return [...new Set(details.map(item => {
     const field = item.loc?.[item.loc.length - 1];
     const label = labels[field] || "Lomakkeen kenttä";

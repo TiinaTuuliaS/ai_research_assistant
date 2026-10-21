@@ -123,19 +123,14 @@ class ResearchRequest(BaseModel):
     goal: str = Field(default="", max_length=1000)
     target_market: str = Field(default="", max_length=500)
     budget_eur: float | None = Field(default=None, ge=0, le=10_000_000, allow_inf_nan=False)
-    research_type: Literal["demand", "competition", "market"] | None = None
-    problem: str = Field(default="", max_length=1000)
+    research_type: Literal["competition", "market"] | None = None
     competitors: str = Field(default="", max_length=1000)
 
 
 def research_goal(data: ResearchRequest) -> str:
     """User decision context only; per-agent responsibilities live in deliverables.yaml."""
-    if data.research_type == "demand":
-        return ("Assess demand for this idea among the specified customers. "
-                "User-described problem (unverified hypothesis, not market evidence): " + data.problem
-                + ("\nAdditional user context (unverified): " + data.goal if data.goal else ""))
     if data.research_type == "competition":
-        return ("Compare competitors against the user's solution and evaluate differentiation. "
+        return ("Compare named alternatives using the user's question and criteria. Evaluate differentiation of a proposed solution only if explicitly requested. "
                 "User-provided competitors (unverified; discover alternatives if empty): " + data.competitors
                 + ("\nRequested comparison criteria: " + data.goal if data.goal else ""))
     if data.research_type == "market":
@@ -370,7 +365,7 @@ def save_checkpoint(job_id, **values):
 
 
 def retry_available(job, saved):
-    return bool(job.status == "failed" and saved and saved.inputs.get("current_year")
+    return bool(job.status == "failed" and saved and saved.inputs.get("research_type", "market") in {"competition", "market"} and saved.inputs.get("current_year")
                 and saved.sources and saved.draft and saved.feedback and [s.get("key") for s in job.steps] in (
                     ["researcher", "analyst", "writer"],
                     ["researcher", "trend_analyst", "analyst", "strategist", "writer"])

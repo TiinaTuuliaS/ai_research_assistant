@@ -16,7 +16,7 @@ class FallbackTests(unittest.TestCase):
                 "limitations": ["Asiakasmäärä ei selviä."], "evidence_kind": "offering"}]}}
 
     def test_mode_specific_report_without_model_calls_or_source_quotes(self):
-        for mode in ("demand", "competition", "market"):
+        for mode in ("competition", "market"):
             for language in ("suomi", "english"):
                 text = compose_fallback({"research_type": mode, "language": language}, self.sources(), [])
                 self.assertIn("Yritys tarjoaa ryhmäliikuntaa", text)
@@ -26,7 +26,7 @@ class FallbackTests(unittest.TestCase):
 
     def test_accepted_recommendation_is_preserved_even_if_negative(self):
         accepted = [{"stage": "strategy_task", "text": "Suositus: lykkää toteutusta. Hintaero on epäedullinen [Hinta](https://example.test/)."}]
-        text = compose_fallback({"research_type": "demand"}, self.sources(), accepted)
+        text = compose_fallback({"research_type": "market"}, self.sources(), accepted)
         self.assertIn("lykkää toteutusta", text)
 
     def test_no_evidence_is_failure_not_a_fake_report(self):
@@ -64,13 +64,13 @@ class FallbackTests(unittest.TestCase):
                 return "REJECTED WRITER DRAFT"
             if task.name == "trend_task":
                 return TrendResult(topic="Test", findings=[])
-            return analysis_fixture(mode="demand", ids=["F1"])
+            return analysis_fixture(mode="market", ids=["F1"])
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "SERPER_API_KEY": "test"}), \
              patch.object(Agent, "execute_task", execute), \
              patch("src.ai_research_assistant.crew.assess_findings", side_effect=lambda result, *args: (result, [])), \
              patch("src.ai_research_assistant.crew.review_output", side_effect=lambda raw, **kwargs:
                    (False, "SCOPE_REJECTION") if kwargs.get("final_report") else (True, raw)):
-            result = generate_report("Test", "suomi", research_type="demand", progress=lambda *args: updates.append(args),
+            result = generate_report("Test", "suomi", research_type="market", progress=lambda *args: updates.append(args),
                                      checkpoint=lambda **values: saved.update(values))
         self.assertIn("Rajattu raportti", result)
         self.assertIn("Perusteltu ehdollinen näkemys", result)

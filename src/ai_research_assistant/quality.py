@@ -52,7 +52,8 @@ not the evidence that contradicts it. Never invent superior quality, a lower pri
 a broader selection or customer demand to rescue a recommendation. Missing information
 about a competitor is not evidence that it lacks a feature. A clearly labelled
 proposal may remain without proof of its success; do not reject it merely for uncertainty.
-The user's proposed business is defined ONLY by brief.topic and brief.goal.
+Assess differentiation only if the user requests it. A comparison question need not describe a proposed business.
+If a business is proposed, its definition comes ONLY from the user context.
 Named entities in source findings are external comparators, not the user's company.
 Do not advise developing a named competitor as though it belonged to the user.
 If the competitor already offers the proposed feature, say it is shared.
@@ -88,7 +89,7 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
             "(5) a forecast is not measured growth, an asking price is not willingness to pay, "
             "a shared feature is not a proven competitive advantage. (6) facts missing from this "
             "research are not necessarily unavailable in the world. Scope evidence gaps to this research. "
-            "Remove invented international popularity, dates and trends. Recommendations may be "
+            "Remove invented international popularity, dates and trends. An explicit evidence-gap sentence may name the requested period without asserting observed change. Recommendations may be "
             "conditional proposals, but cannot smuggle in new factual assertions. "
             "Each materially unsupported sentence needs a replacement or DELETE; a caveat elsewhere "
             "does not fix it. Inspect the opening answer as carefully as the body. "

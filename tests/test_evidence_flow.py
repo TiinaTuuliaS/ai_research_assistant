@@ -24,7 +24,7 @@ class EvidenceFlowTests(unittest.TestCase):
             "scope_supported": True, "single_source_supported": True, "reason": "Tarjonta on osoitettu."}]}
         result, _ = repair_excerpts(ResearchResult(topic="Pyörähuolto", findings=[self.finding()]), sources, reviewer)
         checked, _ = assess_findings(result, sources,
-            {"goal": "Prove paying demand for my business", "research_type": "demand", "language": "suomi"}, reviewer)
+            {"goal": "Prove paying demand for my business", "research_type": "market", "language": "suomi"}, reviewer)
         self.assertEqual(len(checked.findings), 1)
         payload = json.loads(reviewer.call.call_args.args[0][1]["content"])
         self.assertEqual(payload["brief"], {"language": "suomi"})

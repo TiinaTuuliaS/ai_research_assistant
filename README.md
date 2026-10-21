@@ -1,8 +1,19 @@
 # AI Markkinatutkimusassistentti
 
-Sovellus auttaa selvittämään idean kysyntää, vertailemaan kilpailijoita ja tutkimaan
+Sovellus auttaa kartoittamaan kilpailutarjontaa ja tutkimaan
 markkinoiden muutoksia. Kolme AI-agenttia kokoaa havainnot, analyysin ja yhteisen
 loppuraportin lähteineen. Työn etenemistä voi seurata käyttöliittymässä.
+
+Tutkimustapoja on kaksi: **kilpailutarjonnan kartoitus** sekä **markkinan tilannekuva ja kehitys**.
+Kysyntätutkimusta ei voi enää käynnistää. Aiemmin tallennetut raportit säilyvät historiassa;
+vanha kysyntätutkimuksen lomakeluonnos nollataan, eikä sitä muuteta huomaamatta toiseksi tutkimukseksi.
+Kysyntätutkimusten keskeytyneitä raportteja ei jatketa uudella työnkululla.
+Kilpailukartoitus voi vertailla olemassa olevia vaihtoehtoja ilman omaa yritysideaa.
+Erottumista arvioidaan vain käyttäjän pyytäessä sitä.
+
+Rajattu raportti voi perustua yhteen lähteeseen. Lähteiden määrä ei ole luotettavuusmittari.
+Sovellus on kokeellinen portfoliodemo: lähdeviitteet ja automaattiset tarkistukset eivät takaa
+väitteiden tai päätelmien oikeellisuutta.
 
 Etusivuun voi tutustua vapaasti. Tutkimusten tekeminen ja omien raporttien katselu
 vaativat kirjautumisen. Raportin voi ladata tekstinä, tallentaa PDF:ksi selaimen
@@ -113,7 +124,7 @@ sivulta). Lähdeluettelo kertoo, mistä sivuteksti saatiin ja mikä jäi hakukat
 Sivun lukeminen ei takaa väitteiden oikeellisuutta. Kartoitus ei ole kattava:
 löytyneiden toimijoiden määrä ei ole markkinan kokonaismäärä.
 
-Tutkija palauttaa kaikissa kolmessa tutkimustavassa Pydantic-validoidun
+Tutkija palauttaa molemmissa tutkimustavoissa Pydantic-validoidun
 `ResearchResult`-olion: aihe ja havainnot (otsikko, yhteenveto, lähdetunniste,
 osuvuus 1–10, tiedon tyyppi, kohde, alue, ajankohta ja
 rajaukset). Tuntemattomia alueita ja ajankohtia ei täydennetä oletuksilla.
@@ -153,7 +164,9 @@ havainto jätetään pois ja muut havainnot säilyvät. Rakenteeltaan virheellin
 kokonaistulos voi edelleen keskeyttää vaiheen yhden korjausyrityksen jälkeen.
 Havaittu muutos tarvitsee lähteen tukeman ajankohdan. Analyytikon päätelmän
 vuosia verrataan juuri sen viittaamien havaintojen tukiteksteihin; käyttäjän
-pyytämä vuosiväli ei itsessään ole näyttöä kehityksestä.
+pyytämä vuosiväli ei itsessään ole näyttöä kehityksestä. Tunnistettu näytön puutetta
+kuvaava lause saa nimetä pyydetyn ajanjakson. Tunnistus kattaa määritellyt
+suomen- ja englanninkieliset ilmaukset, ei kaikkia mahdollisia sanamuotoja.
 Loppuraportin johtopäätökset tarkistetaan alkuperäisiä havaintoja ja lähteitä vasten.
 Käyttäjän lähtökuvauksen oletukset erotetaan lähdetiedosta. Sisältötarkistuksen
 muokkaama raportti tarkistetaan vielä kerran ja sen korjaukset säilytetään;
@@ -161,8 +174,10 @@ pelkkä toinen tekstikorjaus ei hylkää raporttia. Lähdeviitteet tarkistetaan 
 jälkeen. Nämä tarkistukset lisäävät AI-kutsuja, eivätkä takaa virheettömyyttä.
 
 Loppuraportti tarkistetaan erillisellä mallikutsulla. Tarkistus arvioi kielen selkeyttä, aiheen
-mukaista sisältöä ja väitteiden tukea lähteiden sivuteksteissä tai hakukatkelmissa sekä korjaa sanamuotoja
-ja poistaa perusteettomia väitteitä. Mallin tekemä tarkistus ei takaa virheettömyyttä.
+mukaista sisältöä ja väitteiden tukea hyväksytyissä havainnoissa ja niiden tukikatkelmissa sekä korjaa sanamuotoja
+ja poistaa perusteettomia väitteitä. Se ei saa koko tallennettua sivutekstiä, joten
+ensimmäisessä havaintotarkistuksessa hyväksytty virhetulkinta voi jäädä tunnistamatta.
+Mallin tekemä tarkistus ei takaa virheettömyyttä.
 Hylättyä välitulosta ja loppuraporttia yritetään korjata kerran.
 Hylätystä tutkimushavainnosta yritetään kerran säilyttää suppeampi, saman lähteen
 tukema havainto. Korjattu havainto tarkistetaan uudelleen. Tarjontahavainto ei
@@ -212,8 +227,8 @@ Tämä lisää enintään kaksi mallikutsua, tai kolme jos uusintatarkistuksen r
 Jos hyväksyttyjä havaintoja ei jää, analyysia ei
 käynnistetä tyhjällä aineistolla ja tutkimuskerta palautetaan.
 
-Oikeita tuotoksia voi arvioida komennolla `uv run python -m scripts.evaluate_reports demand`
-(vaihtoehdot: `demand`, `competition`, `market`). Tämä käyttää API-krediittejä ja
+Oikeita tuotoksia voi arvioida komennolla `uv run python -m scripts.evaluate_reports competition`
+(vaihtoehdot: `competition`, `market`). Tämä käyttää API-krediittejä ja
 tallentaa testiraportin `.runtime/evaluations/`-kansioon, ei käyttäjien raportteihin.
 
 Paikallinen sovellus käyttää Reactia, FastAPI:a, SQLitea ja CrewAI:ta. Julkaisussa
@@ -226,4 +241,4 @@ joten ne säilyvät terminaalin sulkemisen jälkeen. Loki sisältää virhetyypi
 koodikohdat ja validoinnissa epäonnistuneet kentät, ei raporttisisältöä tai API-avaimia.
 Lokit kiertävät automaattisesti (enintään kolme noin 1 Mt:n tiedostoa).
 
-Tutkimuksessa on kolme agenttia: tutkija kokoaa lähteistetyt havainnot ja kehityssuunnat, analyytikko muodostaa päätelmän ja suosituksen, ja kirjoittaja viimeistelee raportin. Tutkimustavat ovat edelleen kysynnän arviointi, kilpailijavertailu ja markkinan kehitys. Tutkijan ja analyytikon tulokset validoidaan Pydantic-malleilla.
+Tutkimuksessa on kolme agenttia: tutkija kokoaa lähteistetyt havainnot ja kehityssuunnat, analyytikko muodostaa päätelmän ja suosituksen, ja kirjoittaja viimeistelee raportin. Tutkimustavat ovat kilpailutarjonnan kartoitus sekä markkinan tilannekuva ja kehitys. Tutkijan ja analyytikon tulokset validoidaan Pydantic-malleilla.

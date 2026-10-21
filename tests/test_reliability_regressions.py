@@ -122,3 +122,13 @@ class ReliabilityRegressions(unittest.TestCase):
         result.answer.statement = "Liiketoiminta siirtyi vuonna 2026."
         result.gaps = ["Vuosien 2023–2026 kokonaiskehitys ei selviä."]
         result.validate_evidence(ledger, brief)
+
+    def test_evidence_gap_can_name_requested_years_without_sheltering_growth_claim(self):
+        result = analysis_fixture(ids=["F1"])
+        ledger = [dict(finding_id="F1", supporting_text="Palvelu on tarjolla.")]
+        brief = dict(topic="Test", research_type="market")
+        result.answer.statement = "Aineisto ei riitä arvioimaan kehitystä vuosina 2023–2025."
+        result.validate_evidence(ledger, brief)
+        result.answer.statement += " Tarjonta kasvoi vuonna 2024."
+        with self.assertRaisesRegex(ValueError, "year absent"):
+            result.validate_evidence(ledger, brief)

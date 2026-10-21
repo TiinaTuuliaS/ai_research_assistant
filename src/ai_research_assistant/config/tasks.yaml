@@ -50,7 +50,8 @@ analysis_task:
     Osoitettu ero vaatii vertailutietoa molemmista osapuolista.
     Pelkkä kilpailijan ominaisuus ei ole ero käyttäjän määrittelemättömään suunnitelmaan.
     Jos vertailutietoa ei ole, käytä unknown; älä päättele puuttumista.
-    Päätelmän vuosien pitää löytyä sen omista tukiteksteistä.
+    Tosiasiaväitteen vuosien pitää löytyä sen omista tukiteksteistä.
+    Näytön puutetta kuvaava lause saa nimetä käyttäjän pyytämän ajanjakson.
     Suositus saa olla ehdollinen. Jos aineisto ei oikeuta valintaan, kerro mikä
     ratkaiseva tieto puuttuu; älä keksi strategiaa tai asiakashyötyä täyttääksesi rakenteen.
   expected_output: >

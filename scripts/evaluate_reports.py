@@ -1,6 +1,6 @@
 """Manual, paid end-to-end evaluation. Never writes to the application's database.
 
-Run from the project root: uv run python -m scripts.evaluate_reports demand
+Run from the project root: uv run python -m scripts.evaluate_reports competition
 Review the generated agent outputs and final report in .runtime/evaluations/.
 """
 import argparse
@@ -14,9 +14,6 @@ from src.api import generate_report
 
 
 CASES = {
-    "demand": dict(topic="Japanilainen curryravintola Tampereelle",
-                   goal="Onko japanilaiseen curryyn keskittyvälle lounasravintolalle näyttöä kysynnästä?",
-                   target_market="Tampereen lounasasiakkaat"),
     "competition": dict(topic="Vaatteiden korjauspalvelu Turussa",
                         goal="Miten pieni korjausompelimo voisi erottua paikallisista vaihtoehdoista?",
                         target_market="Turku, vaatteitaan korjauttavat kuluttajat"),

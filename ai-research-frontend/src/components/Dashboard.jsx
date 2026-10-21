@@ -94,7 +94,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
   return <main className="landing">
     <section className="hero">
       <div className="hero-copy">
-        <h1>🤖 AI Markkinatutkimusassistentti</h1>
+        <h1 aria-label="AI Markkinatutkimusassistentti">🤖 AI <span>Markkina<wbr />tutkimusassistentti</span></h1>
         <p className="lead">Tutki markkinoita eri näkökulmista. Kolme tekoälyagenttia kokoaa havainnot, punnitsee niiden merkityksen ja tiivistää vastauksen kysymykseesi.</p>
         <a className="text-link" href="#esimerkki">Katso esimerkkiraportti ilman tunnusta ↗</a>
         <div className="agent-badges" aria-label="Tutkimuksen vaiheet"><span>🔍 Tutkimus</span><span>📊 Analyysi</span><span>✍️ Raportti</span></div>
@@ -117,7 +117,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
           </div>
           <div className="research-type-fields" key={type.id}>
             <h3>{type.title}</h3><p className="field-help">{type.outcome}</p>
-            {type.fields.map(input => <div key={input.name}>
+            {type.fields.map(input => <div key={input.name} className={input.multiline ? "field-wide" : undefined}>
               <label htmlFor={input.name}>{input.label}{input.optional && <span className="optional"> · valinnainen</span>}</label>
               {input.options ? <select id={input.name} {...field(input.name)} value={draft[input.name] || input.defaultValue}>
                 {input.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -133,11 +133,6 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
             {preview.gaps.length > 0 && <><ul>{preview.gaps.map(gap => <li key={gap}>{gap}</li>)}</ul>
               <p className="field-help">Voit täydentää tietoja yllä tai jatkaa avoimilla rajauksilla. Avoin rajaus voi tehdä vastauksesta yleisemmän.</p></>}
           </section>
-          <details className="research-extras"><summary>Lisätiedot · valinnainen budjetti</summary>
-          <label htmlFor="budget">Kokeilubudjetti (€) <span className="optional">valinnainen</span></label>
-          <input id="budget" type="number" min="0" max="10000000" step="0.01" placeholder="Esim. 150" aria-describedby="budget-help" {...field("budget_eur")} />
-          <p id="budget-help" className="field-help">0 € tarkoittaa kokeilua ilman ostoja. Tyhjä kenttä jättää budjetin avoimeksi.</p>
-          </details>
           <p className="field-help" aria-live="polite">
             {user && quota?.unlimited ? "Ylläpitäjätili: rajattomat tutkimukset."
               : user && quota ? `Tutkimuksia jäljellä: ${quota.remaining} / ${quota.limit}.` : "Jokaisella käyttäjätilillä voi tehdä yhteensä kolme tutkimusta."}
