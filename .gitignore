@@ -9,3 +9,6 @@ __pycache__/
 .crewai/
 ai-research-frontend/node_modules/
 ai-research-frontend/build/
+
+# Local invitation command reminder
+/create_invite.txt

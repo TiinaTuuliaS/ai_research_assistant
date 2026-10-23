@@ -61,3 +61,10 @@ class ResearchRecovery(Base):
     draft = Column(Text, nullable=False, default="")
     feedback = Column(Text, nullable=False, default="")
     retries = Column(Integer, nullable=False, default=0)
+
+
+class SignupInvite(Base):
+    __tablename__ = "signup_invites"
+    token_hash = Column(String(64), primary_key=True)
+    used_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(String, nullable=False, default=utc_created_at)

@@ -19,7 +19,7 @@ class Comparison(BaseModel):
     competitor: str = Field(default='', description='Display name resolved from competitor_id by the server.')
     competitor_id: str = Field(default='', description='Exact entity_id (E1 etc.) from accepted findings. Never invent an ID.')
     feature: NonEmptyText
-    status: Literal["shared", "evidenced_difference", "proposal", "unknown"]
+    status: Literal["shared", "evidenced_difference", "unknown"]
     finding_ids: list[str] = Field(min_length=1, max_length=12)
     limitation: NonEmptyText
 
@@ -31,9 +31,7 @@ class AnalysisResult(BaseModel):
     answer: Conclusion
     conclusions: list[Conclusion] = Field(max_length=6)
     comparisons: list[Comparison] = Field(max_length=6)
-    recommendation: NonEmptyText
-    alternative: NonEmptyText
-    gaps: list[NonEmptyText] = Field(min_length=1, max_length=6)
+    gaps: list[NonEmptyText] = Field(max_length=6)
 
     def validate_evidence(self, findings, brief):
         if self.research_type != brief.get("research_type") or self.topic != brief.get("topic"):
@@ -79,18 +77,23 @@ def render_analysis(result, findings, language="suomi"):
         urls = {str(ledger[key]["source"]): ledger[key].get("source_id", "") for key in ids}
         label = "Lähde" if fi else "Source"
         return " ".join(f"[{label}{' ' + sid if sid else ''}]({url})" for url, sid in urls.items())
-    lines = ["## " + ("Vastaus kysymykseesi" if fi else "Answer")]
+    lines = ["## " + ("Yhteenveto" if fi else "Summary")]
     for conclusion in [result.answer, *result.conclusions]:
-        lines.extend([conclusion.statement + " " + citations(conclusion.finding_ids),
-                      conclusion.uncertainty])
+        lines.append(conclusion.statement + " " + citations(conclusion.finding_ids))
     labels = {"shared": "Yhteinen ominaisuus", "evidenced_difference": "Osoitettu ero",
-              "proposal": "Testattava ehdotus", "unknown": "Ei vahvistettu"}
+              "unknown": "Ei vahvistettu"}
     for comparison in result.comparisons:
         lines.extend([f"### {comparison.competitor}: {comparison.feature}",
                       labels[comparison.status] if fi else comparison.status,
                       comparison.limitation + " " + citations(comparison.finding_ids)])
-    lines.extend(["## " + ("Suositus" if fi else "Recommendation"), result.recommendation,
-                  "## " + ("Vaihtoehto" if fi else "Alternative"), result.alternative,
-                  "## " + ("Tiedon puutteet" if fi else "Evidence gaps"),
-                  "\n".join(f"- {gap}" for gap in result.gaps)])
+    # Keep the full uncertainty content, but group it after the findings.
+    limits = {}
+    for conclusion in [result.answer, *result.conclusions]:
+        ids = limits.setdefault(conclusion.uncertainty, [])
+        ids.extend(key for key in conclusion.finding_ids if key not in ids)
+    for gap in result.gaps:
+        limits.setdefault(gap, [])
+    if limits:
+        lines.extend(["## " + ("Näytön vahvuus ja puutteet" if fi else "Evidence strength and gaps"),
+                      "\n".join(f"- {text} {citations(ids)}".rstrip() for text, ids in limits.items())])
     return "\n\n".join(lines)

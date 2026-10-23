@@ -1,46 +1,77 @@
 competition:
   research_task: >
-    Etsi aiheeseen sopivat nimetyt vaihtoehdot oikealta alueelta sekä olennaiset
-    vertailukohteet muualla. Selvitä mitä asiakas saa, kenelle tarjonta sopii,
-    saatavuus ja ilmoitettu hinta. Sovita vertailuperusteet toimialaan.
-    Suosi toimijoiden alkuperäisiä palvelu-, tuote- ja hinnastosivuja.
-    Etsi myös dokumentoituja muutoksia tarjonnassa ja valintaperusteissa.
-    Tuntematon tieto jää tuntemattomaksi; tuotejulkaisu ei osoita suosiota.
+    Etsi käyttäjän aiheeseen ja alueeseen sopivat nimetyt toimijat.
+    Jos käyttäjä nimeää vertailtavat toimijat, keskity niihin. Muita toimijoita
+    tai alueita tarvitaan vain, jos käyttäjän kysymys koskee niitä.
+    Kerää käyttäjän pyytämät vertailutiedot toimija kerrallaan alkuperäisiltä
+    palvelu-, tuote- ja hinnastosivuilta. Säilytä palvelun sisältö, hinnan
+    yksikkö ja ehdot. Puuttuva tieto merkitään puuttuvaksi.
+    Yhteen vertailuperusteeseen vastaava tieto on hyödyllinen osahavainto.
   analysis_task: >
-    Vertaa nimettyjen vaihtoehtojen tarjontaa käyttäjän kysymyksen ja kriteerien perusteella.
-    Arvioi käyttäjän oman suunnitelman erottumista vain, jos käyttäjä pyytää sitä.
-    Täytä comparisons vain lähteillä tuetuista vertailukohteista. Kerro
-    konkreettinen ominaisuus ja onko se yhteinen, osoitettu ero, testattava
-    ehdotus vai tuntematon. Puuttuva tieto ei osoita kilpailijan puutetta.
-    Kilpailijan jo tarjoama ominaisuus ei itsessään erotu siitä. Ero yhteen
-    kilpailijaan ei osoita markkinanlaajuista ainutlaatuisuutta.
-    Suosittele suuntaa aineiston sallimissa rajoissa; myös valinnan lykkääminen on sallittua.
-    Asiakashyöty on oletus ilman suoraa näyttöä; älä keksi parempaa laatua tai hintaa.
+    Vertaa olemassa olevia toimijoita käyttäjän pyytämillä perusteilla.
+    Yhdistä erilliset lähdehavainnot vertailuksi. Erota samankaltaisuudet,
+    osoitetut erot ja tiedot, joiden perusteella vertailua ei voi tehdä.
+    Vertaa hintoja vain, kun palvelut, yksiköt ja ehdot ovat vertailukelpoisia;
+    muuten esitä hinnat erikseen ehtoineen. Sido erot molempien toimijoiden
+    havaintoihin. Puuttuva tieto ei osoita ominaisuuden puuttumista.
+    Vastaa vain siihen, mitä olemassa olevasta tarjonnasta voidaan todeta.
+    Älä kehitä käyttäjälle yritysideaa, erottumiskeinoa tai toimintastrategiaa.
   report_task: >
-    Vastaa käyttäjän vertailukysymykseen. Käsittele oman ratkaisun erottumista
-    vain, jos käyttäjä pyytää sitä.
-    Käytä otsikoita "Vastaus kysymykseesi", "Tarjonnan vertailu",
-    "Näytön vahvuus ja puutteet", "Johtopäätös" ja "Lähteet".
-    Säilytä ero yhteisen ominaisuuden, osoitetun eron ja testattavan ehdotuksen
-    välillä. Nimeä vertailtavat toimijat. Jos esität ehdotuksen, kerro sen haittapuoli.
-    Käsittele ajallista kehitystä vain, jos se auttaa vastaamaan kysymykseen.
+    Esitä lähteistetty vertailu käyttäjän kysymyksen ja vertailuperusteiden mukaan.
+    Käytä otsikoita "Yhteenveto", "Vertailu", "Näytön vahvuus ja puutteet"
+    ja "Lähteet". Vertailun alaotsikot tulevat tutkittavista ominaisuuksista,
+    eivät yleisistä liiketoiminnan kehittämisen teemoista.
+    Kirjoita alkuun lyhyt yhteenveto tärkeimmistä havainnoista.
+    Kun samat ominaisuudet toistuvat eri toimijoilla, kokoa tiedot yhteen
+    vertailutaulukkoon. Jos taulukosta tulisi vaikealukuinen, esitä tiedot toimijoittain.
+    Säilytä ehdot, lähdeviitteet ja epävarmuudet niiden tietojen yhteydessä.
+    Älä toista taulukon sisältöä ominaisuus- tai toimijakohtaisina listoina.
+    Lisää taulukon jälkeen vain lyhyt kappale sellaisista olennaisista huomioista,
+    joita taulukko ei jo kerro. Näytä osittaiset tiedot ja merkitse puuttuvat tiedot.
+    Pidä rajausosio lyhyenä: kerro vain pyydettyyn vertailuun vaikuttavat puutteet,
+    älä luettele kaikkia asioita, joita käyttäjä ei pyytänyt tutkimaan.
+    Älä lisää ideointia, kehitysehdotuksia tai käyttäjän suunnitelmaa koskevia oletuksia.
 market:
   research_task: >
-    Kokoa kysymyksen kannalta olennaiset toimijat ja markkinahavainnot.
-    Etsi ajoitettua vertailutietoa sekä kansainvälisiä kehityssuuntia.
-    Erota nykytila, todennettu muutos ja ennuste. Ilman vertailukelpoisia
-    aikahavaintoja älä väitä kasvua. Säilytä lähteen alue ja ajanjakso;
-    toisen maan kehitys ei ole paikallinen tosiasia. Älä keksi markkinan kokoa.
+    Kerää käyttäjän kysymykseen ja alueeseen liittyvät
+    markkinahavainnot alkuperäisistä tilastoista, tutkimuksista ja toimijoiden
+    julkaisemista tiedoista. Nykytilakysymyksessä keskity nykyiseen tarjontaan
+    ja toimijoihin. Kehityskysymyksessä etsi ajoitettuja, vertailukelpoisia havaintoja.
+    Käyttäjän ei tarvitse antaa vuosirajausta. Ilman sitä älä oleta tiettyä
+    alkuvuotta tai yhtenäistä aikasarjaa nykyhetkeen asti.
+    Noudata valittua aluetta: Suomi, Euroopan unioni tai koko maailma.
+    Suomen tarkastelussa käytä Suomea koskevaa aineistoa. EU-tarkastelussa
+    suosi EU-tason tilastoja ja tutkimuksia; jäsenmaiden havainnot ovat
+    nimettyjä maakohtaisia esimerkkejä, eikä kaikkia jäsenmaita tarvitse kattaa.
+    Koko maailman tarkastelu on yleiskatsaus valituista maista ja alueista.
+    Säilytä lukujen mittari, kohde, alue ja ajankohta. Erota nykytila,
+    todennettu muutos ja lähteen ennuste. Älä päättele markkinan kokonaiskokoa
+    tai kehitystä yksittäisistä esimerkeistä.
   analysis_task: >
-    Vastaa käyttäjän markkinakysymykseen: mitä aineisto osoittaa nykytilasta,
-    mikä muutos voidaan perustella ja mikä jää epävarmaksi. Kerro vaikutus
-    käyttäjän omaan kysymykseen. Älä oleta hänen perustavan yritystä,
-    etsivän työtä tai kehittävän ohjelmistoa, ellei hän ole sitä kertonut.
-    Suositus voi olla seurattava asia, jos käyttäjä pyytää vain tilannekuvaa.
-    Nimeä vaihtoehtoinen tulkinta ja ratkaiseva epävarmuus. comparisons on tyhjä lista.
+    Muodosta lähdehavaintoihin perustuva vastaus käyttäjän markkinakysymykseen.
+    Erota nykytilaa kuvaavat havainnot vertailukelpoisella aineistolla osoitetuista
+    muutoksista. Lähteen ennuste ei ole toteutunut muutos. Jos aikavertailuun
+    tarvittava tieto puuttuu, kerro puute ja säilytä käyttökelpoinen nykytilatieto.
+    Älä yleistä yhden maan havaintoa koko EU:hun tai maailmaan.
+    Erota EU-tason aineisto muusta Euroopasta.
+    Vuosirajauksen puuttuminen ei ole aineiston puute. Kuvaa muutokset vain
+    niiltä ajankohdilta, joita lähteet tukevat.
+    Älä oleta käyttäjän perustavan yritystä tai suunnittelevan uutta tuotetta.
+    Älä muodosta uusia liiketoimintaideoita tai toimintasuosituksia.
+    comparisons on tyhjä lista.
   report_task: >
-    Vastaa käyttäjän markkinakysymykseen löydetyn aineiston rajoissa.
-    Käytä otsikoita "Vastaus kysymykseesi", "Olennaiset havainnot",
-    "Näytön vahvuus ja puutteet", "Merkitys käyttäjälle" ja "Lähteet".
-    Erota nykytila, todennetut muutokset ja mahdolliset tulevat kehityskulut.
-    Älä käsittele kysymystä automaattisesti uuden tuotteen kysynnän arviointina.
+    Jäsennä raportti käyttäjän kysymyksen mukaan. Aloita otsikolla "Yhteenveto".
+    Käytä sisältöön sopivia osioita, kuten "Markkinan nykytila" ja "Todennetut
+    muutokset", vain kun kysymys ja aineisto antavat niille aiheen.
+    Älä lisää muutososiota vain kertoaksesi, ettei vertailutietoa löytynyt.
+    Kirjoita havainnot yhtenäisinä kappaleina. Kokoa vain kysymykseen
+    vastaamiseen vaikuttavat yleiset puutteet lyhyeen rajausosioon kerran.
+    Älä luettele puuttuvia ennusteita tai markkinaosuuksia, jos niitä ei tarvita
+    kysymykseen vastaamiseen. Nimeä yksittäisen lähteen toimijat esimerkeiksi,
+    ellei aineisto tue niiden keskeistä asemaa koko markkinalla.
+    Kerro raportin alueellinen kattavuus ja säilytä maiden nimet havaintojen yhteydessä.
+    Koko maailman raportti on yleiskatsaus, ei kaikkia maita kattava tutkimus.
+    Merkitse mahdolliset lähteiden ennusteet erikseen ennusteiksi.
+    Päätä osioihin "Näytön vahvuus ja puutteet" ja "Lähteet".
+    Vastaa olemassa olevan tiedon perusteella ilman yritysidean arviointia,
+    uusia tuoteideoita tai strategisia ehdotuksia.

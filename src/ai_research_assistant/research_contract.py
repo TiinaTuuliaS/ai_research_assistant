@@ -77,6 +77,8 @@ def resolve_comparisons(result, findings):
     registry = {f['entity_id']: f['entity'] for f in findings if f.get('entity_id') and f.get('entity')}
     kept = []
     for comparison in result.comparisons:
+        if set(comparison.finding_ids) - {f['finding_id'] for f in findings}:
+            continue
         own = [f for f in findings if f['finding_id'] in comparison.finding_ids]
         if comparison.competitor_id:
             name = registry.get(comparison.competitor_id)
@@ -85,9 +87,12 @@ def resolve_comparisons(result, findings):
             comparison.competitor = name
         elif comparison.competitor not in {f.get('entity') for f in own}:
             continue
+        if comparison.status in {'shared', 'evidenced_difference'} and len({f.get('entity') for f in own} - {None, ''}) < 2:
+            # Do not relabel an unsupported assertion as unknown while retaining its wording.
+            continue
         kept.append(comparison)
     if len(kept) != len(result.comparisons):
-        note = 'Osa yritysvertailuista jätettiin pois: kohdetta ei voitu yhdistää sen tukihavaintoihin.'
+        note = 'Osa yritysvertailuista jätettiin pois: toimijaa, havaintoviitteitä tai molempien osapuolten tukea ei voitu vahvistaa.'
         result.gaps = ([*result.gaps, note] if len(result.gaps) < 6
                        else [*result.gaps[:-1], result.gaps[-1] + ' ' + note])
     result.comparisons = kept

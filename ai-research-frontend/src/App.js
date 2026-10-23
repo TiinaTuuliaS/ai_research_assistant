@@ -20,7 +20,7 @@ function AuthPage({ user, checking, setUser, signup = false }) {
     {checking ? <p role="status">Tarkistetaan kirjautumista…</p> : signup
       ? <Signup onCreated={() => navigate("/login", { replace: true, state: { returnTo: destination, notice: "Tili luotu. Kirjaudu jatkaaksesi." } })} />
       : <Login setUser={setUser} />}
-    <p>{signup ? "Onko sinulla jo tili? " : "Ensimmäistä kertaa täällä? "}
+    <p>{signup ? "Onko sinulla jo tili? " : "Onko sinulla kutsukoodi? "}
       <Link to={signup ? "/login" : "/signup"} state={{ returnTo: destination }}>
         {signup ? "Kirjaudu sisään" : "Luo tili"}
       </Link>
@@ -65,7 +65,7 @@ export default function App() {
 
   return <BrowserRouter>
     <header className="site-header">
-      <Link className="brand" to="/">🔎 Tutkimus</Link>
+      <div className="brand-group"><Link className="brand" to="/">Tutkimusassistentti</Link><span className="demo-badge">Kokeellinen demo</span></div>
       <nav aria-label="Päänavigaatio">
         <Link to="/">Etusivu</Link>
         {user ? <>

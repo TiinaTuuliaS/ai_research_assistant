@@ -15,7 +15,7 @@ from src.api import generate_report
 
 CASES = {
     "competition": dict(topic="Vaatteiden korjauspalvelu Turussa",
-                        goal="Miten pieni korjausompelimo voisi erottua paikallisista vaihtoehdoista?",
+                        goal="Mitä korjauspalveluja paikalliset ompelimot tarjoavat ja mitä niiden hinnoista ja ehdoista tiedetään?",
                         target_market="Turku, vaatteitaan korjauttavat kuluttajat"),
     "market": dict(topic="Käytettyjen huonekalujen markkina Suomessa",
                    goal="Miten markkina on kehittynyt ja mistä muutoksista löytyy näyttöä?",

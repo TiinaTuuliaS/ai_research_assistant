@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import ReportMarkdown from "./ReportMarkdown";
 import { api } from "../api";
 import AgentProgress from "./AgentProgress";
 import ResearchReport from "./ResearchReport";
@@ -45,8 +45,8 @@ export default function PartialResults({ initialJob }) {
       if (!controller.signal.aborted) setError(e.message);
     } finally { if (!controller.signal.aborted) setSending(false); }
   };
-  if (job.status === "completed") return <section className="panel result-section">
-    <h2>Loppuraportti valmistui</h2>
+  if (["completed", "limited"].includes(job.status)) return <section className="panel result-section">
+    <h2>{job.status === "limited" ? "Rajattu tulos – loppuraportti ei valmistunut" : "Loppuraportti valmistui"}</h2>
     <ReportActions topic={job.topic} result={job.result} steps={job.steps} />
     <ResearchReport result={job.result} steps={job.steps} />
   </section>;
@@ -68,12 +68,12 @@ export default function PartialResults({ initialJob }) {
     {active && <AgentProgress job={job} />}
     {job.partial_result && <div ref={results} className="report-body" tabIndex={-1}>
       <ReportActions topic={job.topic} result={job.partial_result} partial />
-      <ReactMarkdown>{job.partial_result}</ReactMarkdown>
+      <ReportMarkdown>{job.partial_result}</ReportMarkdown>
     </div>}
     {job.draft && <details className="agent-perspective">
       <summary>Tarkistamaton kirjoittajan luonnos</summary>
       <p>Luonnos ei läpäissyt kaikkia tarkistuksia. Se voi sisältää virheellisiä väitteitä tai puuttuvia lähdeviitteitä.</p>
-      <ReactMarkdown>{job.draft}</ReactMarkdown>
+      <ReportMarkdown>{job.draft}</ReportMarkdown>
     </details>}
   </section>;
 }

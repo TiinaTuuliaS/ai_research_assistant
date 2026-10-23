@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import ReactMarkdown from "react-markdown";
+import ReportMarkdown from "./ReportMarkdown";
 import { reportText } from "./ResearchReport";
 
 export default function ReportActions({ topic, result, steps = [], partial = false }) {
@@ -13,10 +13,10 @@ export default function ReportActions({ topic, result, steps = [], partial = fal
     const popup = window.open("", "_blank", "width=900,height=750");
     if (!popup) { setStatus("Salli ponnahdusikkuna PDF-tallennusta varten."); return; }
     popup.opener = null;
-    popup.document.write('<!doctype html><html lang="fi"><head><meta charset="utf-8"><title>Tutkimusraportti</title><style>@page{size:A4;margin:18mm}body{font:11pt/1.55 Arial,sans-serif;color:#222;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22pt}h2{font-size:16pt;color:#425b9b}h3{font-size:13pt}h1,h2,h3{break-after:avoid}a{color:#425b9b;overflow-wrap:anywhere}pre{white-space:pre-wrap}img{max-width:100%}table{width:100%;border-collapse:collapse}td,th{padding:6px;border:1px solid #ddd}@media print{body{margin:0;padding:0;max-width:none}}</style></head><body></body></html>');
+    popup.document.write('<!doctype html><html lang="fi"><head><meta charset="utf-8"><title>Tutkimusraportti</title><style>@page{size:A4;margin:18mm}body{font:11pt/1.55 Arial,sans-serif;color:#222;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22pt}h2{font-size:16pt;color:#425b9b}h3{font-size:13pt}h1,h2,h3{break-after:avoid}a{color:#425b9b;overflow-wrap:anywhere}pre{white-space:pre-wrap}img{max-width:100%}table{width:100%;border-collapse:collapse}td,th{padding:6px;border:1px solid #ddd;overflow-wrap:anywhere}th{background:#eeeaff;text-align:left}thead{display:table-header-group}tr{break-inside:avoid}.report-table-scroll{overflow:visible}table{table-layout:fixed;font-size:9pt}@media print{body{margin:0;padding:0;max-width:none}}</style></head><body></body></html>');
     popup.document.close();
     popup.document.title = topic;
-    popup.document.body.innerHTML = renderToStaticMarkup(<article><h1>{topic}</h1><p>AI Markkinatutkimusassistentti · {partial ? "Keskeneräiset osatulokset, ei hyväksytty loppuraportti" : "Tekoälyn tuottama raportti"}</p><ReactMarkdown>{partial ? result : reportText(result, steps)}</ReactMarkdown></article>);
+    popup.document.body.innerHTML = renderToStaticMarkup(<article><h1>{topic}</h1><p>AI Markkinatutkimusassistentti · {partial ? "Keskeneräiset osatulokset, ei hyväksytty loppuraportti" : "Tekoälyn tuottama raportti"}</p><ReportMarkdown>{partial ? result : reportText(result, steps)}</ReportMarkdown></article>);
     popup.focus();
     popup.print();
     setStatus(partial ? "Valitse Tallenna PDF-muodossa. Tiedosto sisältää keskeneräiseksi merkityn osatulosten koosteen." : "Valitse tulostusikkunassa kohteeksi Tallenna PDF-muodossa. Mukana ovat agenttien näkemykset, loppuraportti ja lähteet.");

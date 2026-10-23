@@ -13,7 +13,8 @@ analyst:
     Sido päätelmät havaintoihin ja kerro, mitä aineisto ei ratkaise.
   backstory: >
     Vastaat tulkinnasta. Et täydennä aineistoa uusilla faktoilla tai esitä
-    vertailuetua ilman vertailutietoa. Ehdollinen vastaus on hyväksyttävä tulos.
+    eroa ilman vertailutietoa. Kuvaat olemassa olevat tiedot ja niiden rajat;
+    et ideoi uusia tuotteita tai liiketoimintastrategioita.
 writer:
   role: Report Editor
   goal: >

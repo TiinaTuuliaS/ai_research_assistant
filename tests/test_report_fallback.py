@@ -47,7 +47,7 @@ class FallbackTests(unittest.TestCase):
         self.assertNotIn("ORIGINAL", rendered)
         self.assertNotIn("INTERNAL", rendered)
 
-    def test_writer_failure_returns_report_and_completed_writer_progress(self):
+    def test_writer_failure_returns_limited_report_without_completed_writer_progress(self):
         from crewai import Agent
         from src.api import generate_report
         from src.ai_research_assistant.crew import AiResearchAssistant
@@ -74,6 +74,6 @@ class FallbackTests(unittest.TestCase):
                                      checkpoint=lambda **values: saved.update(values))
         self.assertIn("Rajattu raportti", result)
         self.assertIn("Perusteltu ehdollinen näkemys", result)
-        self.assertTrue(any(i == 2 and state == "completed" and text == result for i, state, text in updates))
+        self.assertTrue(any(i == 2 and state == "failed" and "rajattu kooste" in text for i, state, text in updates))
         self.assertEqual(saved["draft"], "REJECTED WRITER DRAFT")
         self.assertIn("SCOPE_REJECTION", saved["feedback"])

@@ -6,7 +6,7 @@ export default function AgentProgress({ job }) {
   const finished = job.status === "completed";
   const value = finished ? 100 : Math.min(95, Math.round(done / (steps.length || 5) * 100));
   const current = steps.find(step => step.status === "running");
-  const message = finished ? "Tutkimus on valmis" : job.status === "failed" ? "Tutkimus keskeytyi"
+  const message = finished ? "Tutkimus on valmis" : job.status === "limited" ? "Rajattu tulos – loppuraportti ei valmistunut" : job.status === "failed" ? "Tutkimus keskeytyi"
     : current ? `${current.label} työskentelee` : done === steps.length && done ? "Tallennetaan raporttia…" : "Valmistellaan seuraavaa työvaihetta…";
   return <section className="agent-progress" aria-label="Tutkimuksen edistyminen">
     <h2>Agentit työssä</h2>

@@ -7,8 +7,7 @@ def analysis_fixture(topic="Test", mode="market", ids=None):
     return AnalysisResult(research_type=mode, topic=topic,
         answer=dict(statement="Perusteltu ehdollinen näkemys. Aineisto ei osoita kysyntää.",
                     finding_ids=[] if ids is None else ids, uncertainty="Käyttömäärä ei selviä."),
-        conclusions=[], comparisons=[], recommendation="Arvioi rajattua vaihtoehtoa.",
-        alternative="Odota vahvempaa näyttöä.", gaps=["Kysyntä ei selviä."])
+        conclusions=[], comparisons=[], gaps=["Kysyntä ei selviä."])
 
 
 class AnalysisTests(unittest.TestCase):
@@ -151,3 +150,33 @@ class AnalysisTests(unittest.TestCase):
             self.assertTrue(retry_available(job, saved))
             steps[0]["status"] = "failed"
             self.assertFalse(retry_available(job, saved))
+
+    def test_descriptive_analysis_does_not_require_ideas_or_action_recommendations(self):
+        result = analysis_fixture(ids=["F1"])
+        result.gaps = []
+        ledger = [dict(finding_id="F1", source="https://source.test/", source_id="S1", entity="Provider", supporting_text="Published offering")]
+        result.validate_evidence(ledger, dict(topic="Test", research_type="market"))
+        schema = AnalysisResult.model_json_schema()
+        self.assertNotIn("recommendation", schema["properties"])
+        self.assertNotIn("alternative", schema["properties"])
+        self.assertNotIn("proposal", schema["$defs"]["Comparison"]["properties"]["status"]["enum"])
+        rendered = render_analysis(result, ledger)
+        self.assertIn("## Yhteenveto", rendered)
+        self.assertNotIn("## Suositus", rendered)
+        self.assertNotIn("## Vaihtoehto", rendered)
+        self.assertNotIn("## Tiedon puutteet", rendered)
+
+
+    def test_uncertainties_are_grouped_once_after_findings_with_sources(self):
+        result = analysis_fixture(ids=["F1"])
+        result.conclusions = [result.answer.model_copy()]
+        result.gaps = [result.answer.uncertainty]
+        ledger = [dict(finding_id="F1", source="https://source.test/", source_id="S7")]
+        for language, heading in [("suomi", "Näytön vahvuus ja puutteet"), ("english", "Evidence strength and gaps")]:
+            text = render_analysis(result, ledger, language)
+            body, limits = text.split("## " + heading)
+            self.assertNotIn(result.answer.uncertainty, body)
+            self.assertEqual(limits.count(result.answer.uncertainty), 1)
+            self.assertIn("https://source.test/", limits)
+            self.assertIn(result.answer.statement, body)
+        self.assertEqual(result.answer.uncertainty, "Käyttömäärä ei selviä.")

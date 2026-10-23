@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 
 export default function Signup({ onCreated }) {
+  const [inviteCode, setInviteCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -11,15 +12,17 @@ export default function Signup({ onCreated }) {
     if (loading) return;
     setLoading(true); setError("");
     try {
-      await api("/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+      await api("/signup", { method: "POST", body: JSON.stringify({ email, password, invite_code: inviteCode.trim() }) });
       onCreated();
     } catch (error) { setError(error.message || "Tilin luonti epäonnistui."); }
     finally { setLoading(false); }
   };
   return <form className="panel auth-card" onSubmit={signup}>
     <h1>Luo tili</h1>
-    <p>Tilillä voit aloittaa yhteensä kolme tutkimusta ja palata raportteihisi myöhemmin. Myös keskeytynyt tutkimus kuluttaa käyttökerran.</p>
+    <p>Tilin luomiseen tarvitset kertakäyttöisen kutsukoodin. Tilillä voit aloittaa yhteensä kolme tutkimusta ja palata raportteihisi myöhemmin. Myös keskeytynyt tutkimus kuluttaa käyttökerran.</p>
     {error && <p role="alert" className="error">{error}</p>}
+    <label htmlFor="signup-invite">Kutsukoodi</label>
+    <input id="signup-invite" required maxLength={200} autoComplete="off" value={inviteCode} onChange={e => setInviteCode(e.target.value)} />
     <label htmlFor="signup-email">Sähköposti tai käyttäjätunnus</label>
     <input id="signup-email" autoComplete="username" required maxLength={254} value={email} onChange={e => setEmail(e.target.value)} />
     <label htmlFor="signup-password">Salasana (vähintään 12 merkkiä)</label>

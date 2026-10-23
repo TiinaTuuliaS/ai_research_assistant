@@ -1,4 +1,4 @@
-import ReactMarkdown from "react-markdown";
+import ReportMarkdown from "./ReportMarkdown";
 import { compactCitations, stepText } from "./reportFormatting";
 
 export function reportText(result, steps = []) {
@@ -18,10 +18,10 @@ export default function ResearchReport({ result, steps = [] }) {
       <p className="muted">Avaa kunkin agentin oma näkökulma. Näkemykset ovat tekoälyn välituloksia, eivät toisistaan riippumattomia asiantuntija-arvioita.</p>
       {perspectives.map(step => <details className="agent-perspective" key={step.key}>
         <summary>{step.label}<span>{step.description}</span></summary>
-        <ReactMarkdown>{stepText(step.output)}</ReactMarkdown>
+        <ReportMarkdown>{stepText(step.output)}</ReportMarkdown>
       </details>)}
     </> : <p className="muted">Tähän raporttiin ei ole tallennettu agenttikohtaisia näkemyksiä.</p>}
-    {body && <section className="final-report"><h2>Yhdistetty loppuraportti</h2><ReactMarkdown>{body}</ReactMarkdown></section>}
-    {sources && <section className="report-sources"><h2>Lähteet</h2><ReactMarkdown>{sources}</ReactMarkdown></section>}
+    {body && <section className="final-report"><h2>Yhdistetty loppuraportti</h2><ReportMarkdown>{body}</ReportMarkdown></section>}
+    {sources && <section className="report-sources"><h2>Lähteet</h2><ReportMarkdown>{sources}</ReportMarkdown></section>}
   </div>;
 }

@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src import api
-from src.models import Base, LoginSession, Research, ResearchJob, ResearchRecovery, ResearchUsage, User
+from src.models import Base, LoginSession, Research, ResearchJob, ResearchRecovery, ResearchUsage, SignupInvite, User
 from src.security import is_password_hash, token_hash, verify_password
 
 
@@ -47,9 +47,17 @@ class AuthenticationTests(unittest.TestCase):
         self.engine.dispose()
         self.temp.cleanup()
 
+    def invite(self):
+        import secrets
+        code = secrets.token_urlsafe(24)
+        with self.sessions() as db:
+            db.add(SignupInvite(token_hash=token_hash(code)))
+            db.commit()
+        return code
+
     def register_login(self, email="alice@example.test"):
         credentials = {"email": email, "password": self.password}
-        self.assertEqual(self.client.post("/signup", json=credentials).status_code, 201)
+        self.assertEqual(self.client.post("/signup", json={**credentials, "invite_code": self.invite()}).status_code, 201)
         response = self.client.post("/login", json=credentials)
         self.assertEqual(response.status_code, 200)
         return response
@@ -72,18 +80,18 @@ class AuthenticationTests(unittest.TestCase):
     def test_cannot_impersonate_or_read_another_user(self):
         alice = self.register_login().json()["user_id"]
         with patch.object(api, "generate_report", return_value="Alice report"):
-            self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 200)
+            self.assertEqual(self.client.post("/research-jobs", json={"topic": "Market"}).status_code, 202)
         self.client.post("/logout")
         bob = self.register_login("bob@example.test").json()["user_id"]
         self.assertNotEqual(alice, bob)
         self.assertEqual(self.client.get("/researches").json(), [])
         self.assertEqual(self.client.get(f"/researches/{alice}").status_code, 403)
         with patch.object(api, "generate_report") as generate:
-            self.assertEqual(self.client.post("/research", json={"topic": "Market", "user_id": alice}).status_code, 422)
+            self.assertEqual(self.client.post("/research-jobs", json={"topic": "Market", "user_id": alice}).status_code, 422)
             generate.assert_not_called()
         self.client.cookies.clear()
         with patch.object(api, "generate_report") as generate:
-            self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 401)
+            self.assertEqual(self.client.post("/research-jobs", json={"topic": "Market"}).status_code, 401)
             generate.assert_not_called()
         self.assertEqual(self.client.get(f"/researches/{alice}").status_code, 401)
 
@@ -117,18 +125,10 @@ class AuthenticationTests(unittest.TestCase):
         self.register_login()
         self.assertEqual(self.client.post("/signup", json={"email": " ALICE@example.test ", "password": self.password}).status_code, 409)
         self.assertEqual(self.client.post("/login", json={"email": "alice@example.test", "password": "wrong"}).status_code, 401)
-        self.assertEqual(self.client.post("/research", json={"topic": "   "}).status_code, 422)
+        self.assertEqual(self.client.post("/research-jobs", json={"topic": "   "}).status_code, 422)
         self.assertEqual(self.client.post("/logout", headers={"Origin": "https://attacker.test"}).status_code, 403)
         self.assertEqual(self.client.post("/logout", headers={"X-Requested-With": ""}).status_code, 403)
         self.assertEqual(self.client.get("/me").headers["cache-control"], "no-store")
-
-    def test_failed_report_is_not_saved(self):
-        self.register_login()
-        with patch.object(api, "generate_report", side_effect=ValueError("invalid citations")):
-            response = self.client.post("/research", json={"topic": "Market"})
-        self.assertEqual(response.status_code, 502)
-        self.assertNotIn("invalid citations", response.text)
-        self.assertEqual(self.client.get("/researches").json(), [])
 
     def test_research_schema_error_is_clear_and_does_not_expose_output(self):
         self.register_login()
@@ -138,33 +138,10 @@ class AuthenticationTests(unittest.TestCase):
             self.assertEqual(job["status"], "failed")
             self.assertIn("rakenne tai lähdeviitteet", job["error"])
             self.assertNotIn("private", job["error"])
-            response = self.client.post("/research", json={"topic": "Market"})
-            self.assertEqual(response.status_code, 502)
-            self.assertIn("rakenne tai lähdeviitteet", response.json()["detail"])
-            self.assertNotIn("private", response.text)
         entry = self.client.get("/researches").json()[0]
         self.assertEqual(entry["status"], "failed")
         self.assertEqual(entry["partial_result"], "")
         self.assertFalse(entry["can_retry_report"])
-
-    def test_research_brief_reaches_generator_and_rejects_invalid_budget(self):
-        self.register_login()
-        brief = {"topic": "Service", "goal": "Test demand", "target_market": "Finland", "budget_eur": 0}
-        with patch.object(api, "generate_report", return_value="Practical plan") as generate:
-            response = self.client.post("/research", json=brief)
-            self.assertEqual(response.status_code, 200)
-            generate.assert_called_once_with("Service", "suomi", "Test demand", "Finland", 0)
-        with patch.object(api, "generate_report") as generate:
-            for invalid in (-1, 10_000_001, "not-a-number"):
-                self.assertEqual(self.client.post("/research", json={**brief, "budget_eur": invalid}).status_code, 422)
-            self.assertEqual(self.client.post("/research", json={**brief, "goal": "x" * 1001}).status_code, 422)
-            generate.assert_not_called()
-
-    def test_omitted_budget_remains_unknown(self):
-        self.register_login()
-        with patch.object(api, "generate_report", return_value="Plan") as generate:
-            self.client.post("/research", json={"topic": "Service"})
-            generate.assert_called_once_with("Service", "suomi", "", "", None)
 
     def test_archived_demand_report_stays_readable_and_cannot_restart_removed_mode(self):
         from types import SimpleNamespace
@@ -179,34 +156,6 @@ class AuthenticationTests(unittest.TestCase):
         steps = [{"key": key, "status": "completed", "output": "Saved"}
                  for key in ("researcher", "analyst", "writer")]
         self.assertFalse(api.retry_available(SimpleNamespace(status="failed", steps=steps), saved))
-
-    def test_research_modes_change_agent_brief(self):
-        self.register_login()
-        for mode, expected in [("competition", "Compare named alternatives"), ("market", "Map this industry")]:
-            with patch.object(api, "generate_report", return_value="Report") as generate:
-                response = self.client.post("/research", json={"topic": "Service", "research_type": mode, "competitors": "Company A", "goal": "Recent changes"})
-                self.assertEqual(response.status_code, 200)
-                self.assertIn(expected, generate.call_args.args[2])
-                self.assertIn("Recent changes", generate.call_args.args[2])
-                self.assertEqual(generate.call_args.kwargs["research_type"], mode)
-        self.assertEqual(self.client.post("/research", json={"topic": "Service", "research_type": "unknown"}).status_code, 422)
-        with patch.object(api, "generate_report") as generate:
-            self.assertEqual(self.client.post("/research", json={"topic": "Service", "research_type": "demand"}).status_code, 422)
-            generate.assert_not_called()
-
-    def test_logout_during_research_prevents_save(self):
-        self.register_login()
-
-        def revoked_report(*args):
-            with self.sessions() as db:
-                db.query(LoginSession).delete()
-                db.commit()
-            return "Do not save"
-
-        with patch.object(api, "generate_report", side_effect=revoked_report):
-            self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 401)
-        with self.sessions() as db:
-            self.assertEqual(db.query(Research).count(), 0)
 
     def test_job_progress_history_and_ownership(self):
         self.register_login()
@@ -362,9 +311,9 @@ class AuthenticationTests(unittest.TestCase):
     def test_three_attempts_shared_by_both_routes_and_persist_after_login(self):
         self.register_login()
         with patch.object(api, "generate_report", return_value="Report") as generate:
-            for path in ("/research-jobs", "/research", "/research-jobs"):
+            for path in ("/research-jobs", "/research-jobs", "/research-jobs"):
                 self.assertIn(self.client.post(path, json={"topic": "Market"}).status_code, (200, 202))
-            for path in ("/research", "/research-jobs"):
+            for path in ("/research-jobs", "/research-jobs"):
                 response = self.client.post(path, json={"topic": "Fourth"})
                 self.assertEqual(response.status_code, 429)
                 self.assertEqual(response.json()["detail"]["quota"]["remaining"], 0)
@@ -379,14 +328,14 @@ class AuthenticationTests(unittest.TestCase):
     def test_admin_has_unlimited_attempts_but_no_access_to_other_reports(self):
         owner = self.register_login().json()["user_id"]
         with patch.object(api, "ADMIN_USER_IDS", {owner}), patch.object(api, "generate_report", return_value="Report") as generate:
-            for path in ("/research", "/research-jobs") * 2:
+            for path in ("/research-jobs", "/research-jobs") * 2:
                 self.assertIn(self.client.post(path, json={"topic": "Market"}).status_code, (200, 202))
             self.assertEqual(generate.call_count, 4)
             self.assertEqual(self.client.get("/me").json()["quota"],
                              {"limit": None, "used": 4, "remaining": None, "unlimited": True})
             self.assertEqual(self.client.get(f"/researches/{owner + 1}").status_code, 403)
         with patch.object(api, "generate_report") as generate:
-            self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 429)
+            self.assertEqual(self.client.post("/research-jobs", json={"topic": "Market"}).status_code, 429)
             generate.assert_not_called()
 
     def test_failed_attempts_without_results_are_refunded(self):
@@ -395,7 +344,7 @@ class AuthenticationTests(unittest.TestCase):
         self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
         with patch.object(api, "generate_report", side_effect=ValueError("failure")):
             self.client.post("/research-jobs", json={"topic": "Market"})
-            self.client.post("/research", json={"topic": "Market"})
+            self.client.post("/research-jobs", json={"topic": "Market"})
         self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
 
     def test_limited_report_is_saved_and_readable_in_history(self):
@@ -407,8 +356,9 @@ class AuthenticationTests(unittest.TestCase):
         with patch.object(api, "generate_report", return_value=report):
             started = self.client.post("/research-jobs", json={"topic": "Test"}).json()
         saved = self.client.get(f"/research-jobs/{started['id']}").json()
-        self.assertEqual(saved["status"], "completed")
+        self.assertEqual(saved["status"], "limited")
         self.assertEqual(saved["result"], report)
+        self.assertEqual(self.client.get("/researches").json()[0]["status"], "limited")
         self.assertEqual(self.client.get("/researches").json()[0]["result"], report)
         self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 2)
 
@@ -442,5 +392,66 @@ class AuthenticationTests(unittest.TestCase):
         self.assertEqual(self.client.get("/me").json()["quota"]["used"], 3)
 
 
+    def test_invite_required_single_use_and_no_plaintext_storage(self):
+        credentials = {"email": "invited@example.test", "password": self.password}
+        for code in ("", "wrong"):
+            self.assertEqual(self.client.post("/signup", json={**credentials, "invite_code": code}).status_code, 403)
+        code = self.invite()
+        self.assertEqual(self.client.post("/signup", json={**credentials, "invite_code": code}).status_code, 201)
+        self.assertEqual(self.client.post("/signup", json={**credentials, "email": "other@example.test", "invite_code": code}).status_code, 403)
+        with self.sessions() as db:
+            invite = db.get(SignupInvite, token_hash(code))
+            self.assertIsNotNone(invite.used_by)
+            self.assertNotEqual(invite.token_hash, code)
+        self.assertEqual(self.client.post("/login", json=credentials).status_code, 200)
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
+
+    def test_duplicate_account_does_not_consume_invite(self):
+        self.register_login()
+        code = self.invite()
+        payload = {"email": "alice@example.test", "password": self.password, "invite_code": code}
+        self.assertEqual(self.client.post("/signup", json=payload).status_code, 409)
+        self.assertEqual(self.client.post("/signup", json={**payload, "email": "new@example.test"}).status_code, 201)
+
+    def test_legacy_research_cannot_make_paid_calls(self):
+        self.register_login()
+        with patch.object(api, "generate_report") as generate:
+            self.assertEqual(self.client.post("/research", json={"topic": "Market"}).status_code, 410)
+            generate.assert_not_called()
+        self.assertEqual(self.client.get("/me").json()["quota"]["remaining"], 3)
+
+
+    def test_same_invite_cannot_create_two_accounts_concurrently(self):
+        code = self.invite()
+        def signup(index):
+            return self.client.post("/signup", json={"email": f"invite{index}@example.test",
+                "password": self.password, "invite_code": code}).status_code
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            self.assertEqual(sorted(pool.map(signup, range(2))), [201, 403])
+
+    def test_existing_admin_can_login_without_invite(self):
+        with self.sessions() as db:
+            user = User(email="existing@example.test", password=api.hash_password(self.password))
+            db.add(user)
+            db.commit()
+            owner = user.id
+        with patch.object(api, "ADMIN_USER_IDS", {owner}):
+            response = self.client.post("/login", json={"email": "existing@example.test", "password": self.password})
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json()["quota"]["unlimited"])
+
+    def test_job_brief_reaches_generator(self):
+        self.register_login()
+        with patch.object(api, "generate_report", return_value="Report") as generate:
+            response = self.client.post("/research-jobs", json={"topic": "Energy", "research_type": "market",
+                "goal": "Current state", "target_market": "Suomi"})
+            self.assertEqual(response.status_code, 202)
+            self.assertEqual(generate.call_args.args[:2], ("Energy", "suomi"))
+            self.assertIn("Current state", generate.call_args.args[2])
+            self.assertEqual(generate.call_args.args[3:5], ("Suomi", None))
+            self.assertEqual(generate.call_args.kwargs["research_type"], "market")
+
+
 if __name__ == "__main__":
     unittest.main()
+

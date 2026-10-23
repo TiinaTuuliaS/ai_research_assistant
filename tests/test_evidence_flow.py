@@ -74,7 +74,7 @@ class EvidenceFlowTests(unittest.TestCase):
         self.assertNotIn("unverified market gap", json.dumps(payload))
         self.assertNotIn("unreviewed extras", json.dumps(payload))
         self.assertEqual(payload["subject_roles"]["external_entities"], ["PAW BOUTIQUE"])
-        self.assertEqual(payload["subject_roles"]["user_proposal"], "Uusi trimmaamo Espoossa")
+        self.assertEqual(payload["subject_roles"]["research_topic"], "Uusi trimmaamo Espoossa")
         self.assertEqual(list(accepted_sources(sources)), ["https://competitor.test/"])
 
     def test_fallback_has_no_empty_findings_heading_or_false_stage_failure(self):

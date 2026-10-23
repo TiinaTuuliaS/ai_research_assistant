@@ -49,9 +49,9 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
         if (controller.signal.aborted) return;
         setJob(data);
         if (data.quota) setQuota(data.quota);
-        if (data.status === "completed" || data.status === "failed") {
+        if (["completed", "limited", "failed"].includes(data.status)) {
           sessionStorage.removeItem(storageKey); setJobId(null); setLoading(false);
-          if (data.status === "completed") { setResult(data.result); setReportTopic(data.topic); }
+          if (["completed", "limited"].includes(data.status)) { setResult(data.result); setReportTopic(data.topic); }
           else setError("");
         } else timer = setTimeout(poll, 1000);
       } catch (error) {
@@ -143,7 +143,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
             {loading ? "Tutkimus käynnissä…" : checking ? "Tarkistetaan kirjautumista…" : quotaExhausted ? "Tutkimukset käytetty" : user ? "Aloita tutkimus →" : "Kirjaudu ja jatka tutkimukseen →"}
           </button>
         </fieldset>
-        <p className="field-help">{user ? "Raportti tallentuu omiin raportteihisi." : "Sivuun ja esimerkkiin voi tutustua vapaasti. Oman tutkimuksen tekeminen vaatii tilin."}</p>
+        <p className="field-help">{user ? "Raportti tallentuu omiin raportteihisi." : "Esimerkkiraportit ovat kaikille avoimia. Omien tutkimusten tekeminen vaatii tilin. Uuden tilin voi luoda vain kutsukoodilla."}</p>
         {error && <p role="alert" className="error">{error}</p>}
         {loading && !job && <p role="status">Käynnistetään tutkimusta…</p>}
         {connectionError && <p role="alert">{connectionError} <button type="button" onClick={() => setPollAttempt(n => n + 1)}>Jatka edistymisen seurantaa</button></p>}
@@ -153,7 +153,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
 
     {job?.status === "failed" && <PartialResults key={job.id} initialJob={job} />}
     {result && <section className="panel result-section" aria-label="Tutkimusraportti">
-      <div className="result-header"><div><p className="eyebrow">Tutkimuksesi on valmis</p><h2>{reportTopic}</h2></div>
+      <div className="result-header"><div><p className="eyebrow">{job?.status === "limited" ? "Rajattu tulos – loppuraportti ei valmistunut" : "Tutkimuksesi on valmis"}</p><h2>{reportTopic}</h2></div>
       </div>
       <ReportActions topic={reportTopic} result={result} steps={job?.steps} />
       <ResearchReport result={result} steps={job?.steps} />
@@ -161,7 +161,7 @@ export default function Dashboard({ user, setUser, checking, draft, setDraft }) 
     </section>}
 
     <section className="value-grid" aria-label="Raportin sisältö">
-      <article><span className="step-number">01</span><h2>Agenttien näkemykset</h2><p>Tutkija kokoaa lähteistetyt havainnot. Analyytikko arvioi niiden merkityksen ja suosittelee etenemissuuntaa.</p></article>
+      <article><span className="step-number">01</span><h2>Agenttien näkemykset</h2><p>Tutkija kokoaa lähteistetyt havainnot. Analyytikko vertailee tietoja ja muodostaa lähteisiin perustuvan yhteenvedon.</p></article>
       <article><span className="step-number">02</span><h2>Yhdistetty loppuraportti</h2><p>Kirjoittaja kokoaa olennaisen: mitä tiedetään, mitä voi päätellä ja mikä on vielä epävarmaa.</p></article>
       <article><span className="step-number">03</span><h2>Lähteet näkyvillä</h2><p>Tarkista havaintojen lähteet ja arvioi, kuinka hyvin aineisto vastaa kysymykseesi.</p></article>
     </section>

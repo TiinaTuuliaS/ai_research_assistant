@@ -12,7 +12,8 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "remark-gfm": "^4.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -29,8 +30,11 @@
   "jest": {
     "moduleNameMapper": {
       "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
-      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js"
-    }
+      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
+      "^unist-util-visit-parents/do-not-use-color$": "<rootDir>/node_modules/unist-util-visit-parents/lib/color.js",
+      "^#min(path|proc|url)$": "<rootDir>/node_modules/vfile/lib/min$1.browser.js"
+    },
+    "transformIgnorePatterns": []
   },
   "browserslist": {
     "production": [

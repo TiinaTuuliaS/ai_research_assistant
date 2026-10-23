@@ -60,10 +60,10 @@ class QualityTests(unittest.TestCase):
         self.assertIn(COMPETITION_REVIEW_RULES, messages[0]["content"])
         self.assertEqual(json.loads(messages[1]["content"])["original_findings"], sources["https://example.test/menu"]["research_findings"])
 
-    def test_competition_rules_are_scoped_and_honest_proposals_can_pass(self):
+    def test_competition_rules_are_scoped_to_existing_provider_comparisons(self):
         reviewer = Mock()
         reviewer.call.return_value = QualityReview(issues=[])
-        text = "Testattava ehdotus: iltapalvelu. Kilpailijoiden aukioloajoista ei ole tietoa."
+        text = "Kilpailijoiden aukioloajoista ei ole vertailutietoa."
         for mode in ("competition", "market"):
             with self.subTest(mode=mode):
                 self.assertEqual(review_output(text, sources={}, brief={"research_type": mode},

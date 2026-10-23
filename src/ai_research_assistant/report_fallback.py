@@ -19,14 +19,14 @@ def compose_fallback(brief, sources, accepted):
                         "Puuttuvia hinta- ja palveluehtoja ei pidä tulkita osoitetuiksi eroiksi.",
                         "The evidence helps compare alternatives. Missing price and service terms are not demonstrated differences."),
         "market": ("Aineistosta voi muodostaa rajatun tilannekuvan. Sen perusteella ei pidä olettaa koko markkinan suuntaa tai kokoa. "
-                   "Päätöksessä kannattaa erottaa tässä kuvatut havainnot koko markkinaa koskevista oletuksista.",
+                   "Tässä kuvatut havainnot eivät edusta koko markkinaa.",
                    "The evidence provides a limited snapshot, not the size or direction of the whole market. Base decisions on the observations below rather than assuming they describe the entire market."),
     }
     conclusion = stages.get("strategy_task") or stages.get("analysis_task") or conclusions[mode][0 if fi else 1]
-    sections = ["## " + ("Päätelmä" if fi else "Conclusion"), conclusion,
+    sections = ["## " + ("Yhteenveto" if fi else "Summary"), conclusion,
                 ("**Rajattu raportti:** viimeistely ei onnistunut. Tämä kooste sisältää vain valmistuneet, tarkistetut tulokset. "
-                 "Puuttuva analyysi ei tarkoita kielteistä arviota ideasta."
-                 if fi else "**Limited report:** final synthesis failed. This compilation contains only completed, reviewed results. Missing analysis is not evidence against the idea."),
+                 "Kooste ei sisällä valmista vertailua tai markkina-analyysia."
+                 if fi else "**Limited report:** final synthesis failed. This compilation contains only completed, reviewed results. This compilation is not a completed comparison or market analysis."),
                 ]
     if findings:
         only_background = all(f.get('question_fit') == 'background' for f in findings)
@@ -34,7 +34,7 @@ def compose_fallback(brief, sources, accepted):
             sections.append('Aineistosta saatiin vain taustatietoa, ei suoraa vastausta tutkimuskysymykseen.' if fi else 'Only background evidence was obtained; it does not directly answer the question.')
         sections.append("## " + (("Taustahavainnot" if only_background else "Ratkaisevat havainnot") if fi else "Findings"))
     # Summaries are the researcher's reviewed paraphrases. Never publish source_passage/page_text.
-    for finding in findings[:6]:
+    for finding in findings:
         sections.append(f"- {finding['summary']} [" + ("Lähde" if fi else "Source") + f"]({finding['source']})")
     if stages.get("analysis_task") and stages.get("strategy_task"):
         sections.extend(["## " + ("Perustelut" if fi else "Reasoning"), stages["analysis_task"]])
@@ -42,7 +42,7 @@ def compose_fallback(brief, sources, accepted):
         sections.append(stages["trend_task"])
     limits = list(dict.fromkeys(limit for finding in findings for limit in finding.get("limitations", [])))
     sections.extend(["## " + ("Näytön vahvuus ja puutteet" if fi else "Evidence strength and gaps"),
-                     " ".join(limits[:5]) or ("Loppuraportin viimeistely ei onnistunut. Tämä kooste ei korvaa kattavaa tutkimusta; päätelmä on rajattu tallennettuun aineistoon."
+                     " ".join(limits) or ("Loppuraportin viimeistely ei onnistunut. Tämä kooste ei korvaa kattavaa tutkimusta; päätelmä on rajattu tallennettuun aineistoon."
                          if fi else "Final synthesis did not succeed. This compilation is limited to the saved evidence and does not replace a comprehensive study.")])
     body = remove_editor_instructions("\n\n".join(sections))
     body = attach_trend_evidence(body, sources, brief.get("language", "suomi"))

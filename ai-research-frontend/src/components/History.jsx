@@ -26,7 +26,8 @@ function History({ user }) {
   const userId = user?.user_id;
   const requestedId = useLocation().state?.researchId;
   const completed = researches.filter(r => !r.status || r.status === "completed").sort((a, b) => b.id - a.id);
-  const unfinished = researches.filter(r => r.status && r.status !== "completed");
+  const limited = researches.filter(r => r.status === "limited").sort((a, b) => b.id - a.id);
+  const unfinished = researches.filter(r => r.status && !["completed", "limited"].includes(r.status));
 
   // 🔥 AINA HOOKIT ENSIN
   useEffect(() => {
@@ -68,15 +69,16 @@ function History({ user }) {
         <div className="history-selected">
           <h2>📄 {selected.topic}</h2>
           <ResearchDate value={selected.created_at} />
-          {selected.status && selected.status !== "completed"
+          {selected.status && !["completed", "limited"].includes(selected.status)
             ? <PartialResults key={selected.id} initialJob={selected} />
-            : <><ReportActions key={selected.id} topic={selected.topic} result={selected.result} steps={selected.steps} />
+            : <>{selected.status === "limited" && <p className="notice" role="status">Rajattu tulos – loppuraportti ei valmistunut. Kooste sisältää vain valmistuneet havainnot ja mahdollisen analyysin.</p>}<ReportActions key={selected.id} topic={selected.topic} result={selected.result} steps={selected.steps} />
               <ResearchReport result={selected.result} steps={selected.steps} /></>}
         </div>
       )}
 
       {/* 🔥 LISTA */}
       {[{ title: "Valmiit raportit · uusimmat ensin", items: completed },
+        { title: "Rajatut tulokset · loppuraportti ei valmistunut", items: limited },
         { title: "Keskeneräiset tutkimukset ja osatulokset", items: unfinished }].map(group => group.items.length > 0 && (
         <section key={group.title} aria-label={group.title}>
           <h2>{group.title}</h2>
@@ -89,7 +91,7 @@ function History({ user }) {
           >
           <h3>{r.topic}</h3>
           <ResearchDate value={r.created_at} />
-          {r.status && r.status !== "completed" && <p>{r.status === "failed" ? "Osatulokset · loppuraportti kesken" : "Tutkimus käynnissä"}</p>}
+          {r.status && r.status !== "completed" && <p>{r.status === "limited" ? "Rajattu tulos – loppuraportti ei valmistunut" : r.status === "failed" ? "Osatulokset · loppuraportti kesken" : "Tutkimus käynnissä"}</p>}
           <p style={{ color: "var(--accent)" }}>
             Klikkaa avataksesi →
           </p>

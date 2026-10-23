@@ -89,3 +89,14 @@ test("aborts obsolete requests and discards their results after user changes", a
   await waitFor(() => expect(screen.getByText("Ei vielä tutkimuksia.")).toBeInTheDocument());
   expect(screen.queryByText("Market report")).not.toBeInTheDocument();
 });
+
+test("limited reports have their own group and open as a limited result", async () => {
+  api.mockResolvedValue([{id: 42, topic: "Restaurants", status: "limited", result: "Saved limited findings", steps: []}]);
+  render(<MemoryRouter><History user={{user_id: 1}} /></MemoryRouter>);
+  await screen.findByText("Restaurants");
+  expect(screen.queryByRole("region", {name: "Valmiit raportit · uusimmat ensin"})).not.toBeInTheDocument();
+  expect(screen.getByRole("region", {name: "Rajatut tulokset · loppuraportti ei valmistunut"})).toBeInTheDocument();
+  fireEvent.click(screen.getByText("Restaurants"));
+  expect(screen.getByRole("status")).toHaveTextContent("Rajattu tulos");
+  expect(screen.getByText("Saved limited findings")).toBeInTheDocument();
+});

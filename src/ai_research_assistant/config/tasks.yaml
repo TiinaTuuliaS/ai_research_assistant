@@ -3,7 +3,7 @@ research_task:
     {quality_rules}
     Aihe: {topic}. Nykyinen vuosi: {current_year}.
     Käyttäjän vahvistamaton lähtökuvaus: {goal}.
-    Alue ja asiakkaat: {target_market}. Budjetti: {budget}.
+    Alue ja rajaus: {target_market}.
     Tutkimustapa: {research_type}. Tehtäväsi: {research_task_deliverable}
     Etsi kysymykseen vastaavaa aineistoa enintään kuudella haulla.
     Suosi alkuperäisiä palvelu- ja hinnastosivuja sekä riippumatonta tutkimustietoa.
@@ -20,7 +20,7 @@ research_task:
     kokemuksesta, ei palvelun yleisestä laadusta. Säilytä väitteen esittäjä.
     Jos page_status ei ole retrieved, käytössä on vain hakukatkelma.
     Julkaisu- ja hakupäivä eivät ole havainnon ajankohta.
-    Älä tee päätelmiä, vertailuetuja tai suosituksia. Ne kuuluvat analyytikolle.
+    Kokoa lähdehavainnot. Analyytikko vastaa niiden vertailusta ja tulkinnasta.
   expected_output: >
     {research_task_deliverable}
     Palauta ResearchResult kielellä {language}: topic ja findings.
@@ -35,46 +35,49 @@ analysis_task:
   description: >
     {quality_rules}
     Aihe: {topic}. Käyttäjän vahvistamaton lähtökuvaus: {goal}.
-    Alue ja asiakkaat: {target_market}.
+    Alue ja rajaus: {target_market}.
     Tehtäväsi: {analysis_task_deliverable}
     Muodosta päätelmät vain kontekstin hyväksytyistä havainnoista.
     question_fit erottaa suoraan kysymykseen vastaavat havainnot (direct)
-    taustatiedosta (background). Taustatieto ei ratkaise kysymystä; unassessed
+    taustatiedosta (background). Yhteen vertailuperusteeseen vastaava osahavainto on direct, vaikka muut tiedot puuttuvat.
+    Vertaa erillisten toimijoiden havaintoja itse; lähteen ei tarvitse tehdä valmista vertailua.
+    Taustatieto ei vastaa yhteenkään pyydettyyn osakysymykseen; unassessed
     tarkoittaa tarkistamatonta osuvuutta. Kerro coverage-kentän osoittama puute.
     source_context säilyttää lähteen tiedon luonteen: visio, lupaus ja
     yksittäinen asiakaskokemus eivät muutu todennetuksi nykytilaksi.
-    Käyttäjän suunnitelma ei ole todennettu markkinatieto eikä lähteissä nimetty yritys.
+    Käyttäjän rajaukset määrittävät tutkimuskysymyksen, eivät todenna markkinaväitteitä.
     Liitä jokaiseen päätelmään sitä tukevat finding_ids ja olennainen epävarmuus.
     Hintavertailu vaatii samat palvelut, yksiköt ja ehdot; muuten kuvaa hinnat erikseen.
     Tarjonta ei osoita kysyntää. Yksittäinen esimerkki ei osoita markkinan kasvua.
     Osoitettu ero vaatii vertailutietoa molemmista osapuolista.
-    Pelkkä kilpailijan ominaisuus ei ole ero käyttäjän määrittelemättömään suunnitelmaan.
     Jos vertailutietoa ei ole, käytä unknown; älä päättele puuttumista.
     Tosiasiaväitteen vuosien pitää löytyä sen omista tukiteksteistä.
     Näytön puutetta kuvaava lause saa nimetä käyttäjän pyytämän ajanjakson.
-    Suositus saa olla ehdollinen. Jos aineisto ei oikeuta valintaan, kerro mikä
-    ratkaiseva tieto puuttuu; älä keksi strategiaa tai asiakashyötyä täyttääksesi rakenteen.
+    Esitä vain aineistoon perustuvat tulkinnat ja niiden rajat.
+    Älä laadi toimintasuosituksia, uusia ideoita tai oletuksia käyttäjän suunnitelmista.
   expected_output: >
     {analysis_task_deliverable}
     Palauta AnalysisResult kielellä {language}. topic täsmälleen: {topic}.
     research_type: {research_type}. answer vastaa kysymykseen; conclusions
-    sisältää vain tarpeelliset päätelmät. statement on tulkinta, finding_ids
+    sisältää vain tarpeelliset päätelmät. Säilytä väitteen tulkintaan välttämättömät ehdot statement-kentässä:
+    tilastovuosi, alue, ennusteen luonne ja esimerkiksi investointipäätöksen
+    ero toteutuneeseen investointiin. uncertainty kuvaa aineiston muita rajoja.
+    statement on tulkinta, finding_ids
     viittaa hyväksyttyihin havaintoihin ja uncertainty kertoo rajat.
-    recommendation ja alternative kuvaavat toimintavaihtoehtoja tai miksi
-    valintaa ei voi vielä tehdä. gaps nimeää ratkaisevat puuttuvat tiedot.
+    gaps nimeää vertailun tai markkinakuvauksen kannalta olennaiset puuttuvat tiedot.
     Vain kilpailijavertailussa comparisons sisältää competitor_id-tunnisteen
     hyväksyttyjen havaintojen entity_id-kentästä (E1 jne.), feature, finding_ids,
     limitation ja status. Ohjelma ratkaisee yrityksen nimen tunnisteesta.
     Jos toimijan tunniste on tyhjä, jätä yritysvertailu pois ja kirjaa puute.
     status on:
     shared (vertailussa osoitettu yhteinen ominaisuus), evidenced_difference
-    (molemmista osapuolista tuettu ero), proposal (testattava ehdotus) tai
+    (molemmista osapuolista tuettu ero) tai
     unknown (vertailuasema selvittämättä). Listat saavat jäädä tyhjiksi.
 report_task:
   description: >
     {quality_rules}
     Aihe: {topic}. Käyttäjän vahvistamaton lähtökuvaus: {goal}.
-    Alue ja asiakkaat: {target_market}.
+    Alue ja rajaus: {target_market}.
     Tehtäväsi: {report_task_deliverable}
     Toimitat analyytikon päätelmät luettavaksi raportiksi; et tee uutta analyysiä.
     Käytä havaintoja vain päätelmien lähdetuen ja ehtojen säilyttämiseen.
@@ -91,6 +94,9 @@ report_task:
     tukitekstit jäävät sisäisiksi; S-lähdeviitteet kuuluvat raporttiin.
     Käytä osioita '## Näytön vahvuus ja puutteet'
     ja '## Lähteet' (englanniksi '## Evidence strength and gaps' ja '## Sources').
+    Kokoa yleiset aineiston puutteet kerran rajausosioon. Älä toista niitä
+    havaintokappaleiden välissä tai jokaisen lähteen kuvauksessa. Säilytä
+    väitteen tulkintaan välttämättömät ehdot itse väitteen yhteydessä.
     Kerro lähteiden käyttötarkoitus ja olennaiset rajat. Lähdemäärä tai sanamäärä
     ei ole tavoite, jota varten lisätään sisältöä.
   expected_output: >
