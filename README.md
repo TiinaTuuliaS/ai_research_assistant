@@ -93,6 +93,8 @@ Olennaiset hinnat, ehdot ja johtopäätökset on tarkistettava alkuperäisistä 
 
 Arviointityö ja tunnetut rajoitteet: [docs/evaluation-notes.md](docs/evaluation-notes.md).
 
+Railwayn käyttöönotto, muuttujat ja tietokannan palautus: [docs/railway.md](docs/railway.md).
+
 ## Julkaisuympäristö
 
 Käytä HTTPS:ää, `COOKIE_SECURE=true`-asetusta, oikeaa `ALLOWED_ORIGINS`-arvoa ja pysyvää

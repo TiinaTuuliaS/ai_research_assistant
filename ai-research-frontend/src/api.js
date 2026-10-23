@@ -1,5 +1,5 @@
 // Use the browser's hostname so localhost and 127.0.0.1 both keep same-site cookies.
-const API_URL = process.env.REACT_APP_API_URL || `${window.location.protocol}//${window.location.hostname}:8000`;
+const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "production" ? "" : `${window.location.protocol}//${window.location.hostname}:8000`);
 
 export function clearLegacyStorage() {
   localStorage.removeItem("user");

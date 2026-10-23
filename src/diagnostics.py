@@ -1,4 +1,5 @@
 """Bounded, persistent error diagnostics without prompts or provider bodies."""
+import os
 import json
 import logging
 from logging.handlers import RotatingFileHandler
@@ -38,7 +39,7 @@ def error_details(exc):
 def configure_diagnostics(path=None):
     logger = logging.getLogger("research.diagnostics")
     if not logger.handlers:
-        target = Path(path) if path else Path(__file__).resolve().parent.parent / ".runtime" / "backend-errors.log"
+        target = Path(path or os.getenv("DIAGNOSTICS_PATH") or Path(__file__).resolve().parent.parent / ".runtime" / "backend-errors.log")
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             handler = RotatingFileHandler(target, maxBytes=1_000_000, backupCount=2, encoding="utf-8")

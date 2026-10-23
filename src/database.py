@@ -4,6 +4,9 @@ from pathlib import Path
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+if os.getenv("RAILWAY_ENVIRONMENT_ID") and not os.getenv("DATABASE_URL"):
+    raise RuntimeError("Set DATABASE_URL to the persistent volume database before starting Railway")
+
 DATABASE_URL = os.getenv(
     "DATABASE_URL", f"sqlite:///{Path(__file__).resolve().parents[1] / 'app.db'}"
 )

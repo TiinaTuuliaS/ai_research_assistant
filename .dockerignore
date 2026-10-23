@@ -1,0 +1,17 @@
+**
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!src/
+!src/**
+!scripts/
+!scripts/**
+!ai-research-frontend/
+!ai-research-frontend/package.json
+!ai-research-frontend/package-lock.json
+!ai-research-frontend/src/
+!ai-research-frontend/src/**
+!ai-research-frontend/public/
+!ai-research-frontend/public/**
+**/__pycache__/
+**/*.pyc

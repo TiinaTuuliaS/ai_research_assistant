@@ -186,9 +186,16 @@ def reserve_research(db: Session, user_id: int):
         })
 
 
-@app.get("/")
-def root():
-    return {"message": "API toimii"}
+@app.get("/health")
+def health(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
+    return {"status": "ok"}
+
+
+if not os.getenv("FRONTEND_DIST"):
+    @app.get("/")
+    def root():
+        return {"message": "API toimii"}
 
 
 @app.post("/signup", status_code=201)
@@ -554,3 +561,8 @@ def legacy_researches(user_id: int, user: User = Depends(current_user),
     if user_id != user.id:
         raise HTTPException(403, "Ei käyttöoikeutta.")
     return get_researches(user, db)
+
+
+if os.getenv("FRONTEND_DIST"):
+    from .frontend import install_frontend
+    install_frontend(app, os.environ["FRONTEND_DIST"])
