@@ -5,6 +5,7 @@ import re
 from pydantic import BaseModel, ConfigDict, Field
 
 from .research_result import NonEmptyText
+from .entity_identity import entity_key
 
 
 class Conclusion(BaseModel):
@@ -62,10 +63,13 @@ class AnalysisResult(BaseModel):
         if self.research_type != "competition" and self.comparisons:
             raise ValueError("comparisons is only for competition research.")
         for comparison in self.comparisons:
-            entities = {ledger[key].get("entity") for key in comparison.finding_ids}
-            if comparison.competitor not in entities:
+            own = [ledger[key] for key in comparison.finding_ids]
+            entities = {entity_key(item.get("entity")) for item in own} - {""}
+            matches = [item for item in own if entity_key(item.get("entity")) == entity_key(comparison.competitor)
+                       and (not comparison.competitor_id or item.get("entity_id") == comparison.competitor_id)]
+            if not matches:
                 raise ValueError("The competitor must match an entity in the referenced findings.")
-            if comparison.status in {"shared", "evidenced_difference"} and len(entities - {None, ""}) < 2:
+            if comparison.status in {"shared", "evidenced_difference"} and len(entities) < 2:
                 raise ValueError("A shared feature or evidenced difference requires observations about both compared entities. Use unknown when the other side is unverified.")
 
 

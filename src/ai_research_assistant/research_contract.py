@@ -1,5 +1,6 @@
 """Repair record structure without changing factual content."""
 import json
+from .entity_identity import entity_key
 from pydantic import BaseModel, Field, ValidationError
 from .research_result import ResearchFinding, ResearchResult
 
@@ -68,26 +69,27 @@ def bind_entities(findings):
         if not name:
             finding['entity_id'] = ''
             continue
-        key = ' '.join(name.split()).casefold()
+        key = entity_key(name)
         registry.setdefault(key, f'E{len(registry) + 1}')
         finding['entity_id'] = registry[key]
 
 
 def resolve_comparisons(result, findings):
-    registry = {f['entity_id']: f['entity'] for f in findings if f.get('entity_id') and f.get('entity')}
     kept = []
     for comparison in result.comparisons:
         if set(comparison.finding_ids) - {f['finding_id'] for f in findings}:
             continue
         own = [f for f in findings if f['finding_id'] in comparison.finding_ids]
         if comparison.competitor_id:
-            name = registry.get(comparison.competitor_id)
-            if not name or comparison.competitor_id not in {f.get('entity_id') for f in own}:
-                continue
-            comparison.competitor = name
-        elif comparison.competitor not in {f.get('entity') for f in own}:
+            matches = [f for f in own if f.get('entity_id') == comparison.competitor_id and entity_key(f.get('entity'))]
+        else:
+            matches = [f for f in own if entity_key(f.get('entity')) and entity_key(f.get('entity')) == entity_key(comparison.competitor)]
+        if not matches or len({entity_key(f.get('entity')) for f in matches}) != 1:
             continue
-        if comparison.status in {'shared', 'evidenced_difference'} and len({f.get('entity') for f in own} - {None, ''}) < 2:
+        # Resolve the display name from this row's own evidence, not another
+        # observation that happens to share the same company ID.
+        comparison.competitor = matches[0]['entity']
+        if comparison.status in {'shared', 'evidenced_difference'} and len({entity_key(f.get('entity')) for f in own} - {''}) < 2:
             # Do not relabel an unsupported assertion as unknown while retaining its wording.
             continue
         kept.append(comparison)
