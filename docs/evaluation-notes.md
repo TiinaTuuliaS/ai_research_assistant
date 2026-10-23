@@ -94,10 +94,56 @@ säilytetään tietokannassa tiivisteenä. Vanha synkroninen `/research`-rajapin
 suljettu, ja tutkimukset käynnistetään `/research-jobs`-reitillä. Näitä toimintoja
 on testattu korvatuilla mallikutsuilla erillisessä testitietokannassa.
 
-Railway-julkaisua ei ole vielä valmisteltu loppuun tai tehty. Pysyvä tietokantalevy,
-varmuuskopiointi ja palautuksen testaus, yhteinen frontend/API-julkaisu sekä tuotannon
-ympäristöasetukset ovat seuraavia töitä. Nykyinen yhden palvelinprosessin työnkulku
-keskeyttää käynnissä olevat tutkimukset palvelimen käynnistyessä uudelleen.
+## Railway-käyttöönotto ja tuotantotesti (23.10.2026)
+
+Sovellus julkaistiin Railway Hobby -palveluun. React ja FastAPI toimivat samasta
+HTTPS-osoitteesta, SQLite on `/data`-volumella ja virhelokin polku on
+`/data/logs/backend-errors.log`. Admin-tunnus siirrettiin erikseen; paikallinen tili
+säilyi. Alla olevat tuotannon käyttöpolkuhavainnot perustuvat käyttäjän ilmoituksiin
+ja hänen toimittamiinsa raportteihin ja lokitulosteisiin, eivät kattavaan auditointiin.
+
+- Etusivu ja kaksi alkuperäistä esimerkkiraporttia avautuivat.
+- Admin-kirjautuminen ja rajattomat ylläpitäjän tutkimuskerrat toimivat.
+- Kutsulla luotu testitili sai kolme tutkimuskertaa; käytetty kutsu hylättiin.
+- Testitilin kolme tutkimusta kuluttivat kiintiön nollaan, eikä uusia tutkimuksia
+  voinut enää käynnistää.
+- Levykauppavertailun ensimmäinen ajo jäi rajatuksi yritysnimen tarkistuksessa.
+  Paikallisesti toistettiin ristiriita: sama yritystunniste hyväksyi kirjainkokoerot,
+  mutta nimivalidointi vaati täsmälleen samaa kirjoitusasua. Käsittely yhtenäistettiin
+  ja vertailun näyttönimi sidottiin sen omiin havaintoihin. Korjauskierroksen 23
+  kohdennettua testiä läpäisi ilman maksullisia kutsuja.
+- Toinen ajo jäi rajatuksi lähdeosoitteen tarkistuksessa. Tallennetusta luonnoksesta
+  puuttui rekisteröidyn URL:n `srsltid`-seurantaparametri. Tunnetun parametrin erot
+  ratkaistaan nyt yksikäsitteiseen alkuperäiseen lähteeseen; sisältöparametreja ei
+  poisteta eikä epäselviä vastineita arvata. Korjauskierroksen 39 kohdennettua testiä
+  läpäisi ilman maksullisia kutsuja. Nämä määrät eivät ole koko backend-testijoukon ajo.
+- Kolmas levykauppatutkimus valmistui loppuraportiksi. Tämä vahvistaa yhden
+  kokonaisen tutkimusajon onnistumisen Railwaysta, ei kaikkien aiheiden luotettavuutta.
+
+### Valmistuneen levykaupparaportin sisältörajoitteet
+
+Neljän kaupan vertailussa hinta- ja valikoimatietoa saatiin lähinnä Äx:stä, joten
+varsinainen kauppojen välinen hintavertailu jäi tekemättä. Välituloksiin verrattaessa
+loppuraporttiin oli lisätty Äx:n sunnuntaisulku ilman näkyvää tukea niissä.
+Laukontorin lauantain tiedot esitettiin taulukossa epäjohdonmukaisesti.
+Verkkokaupan esimerkkihintojen soveltuvuutta Tampereen myymälään ei osoitettu,
+ja aukioloaikataulukon sisältö toistui tekstissä. Näitä ei korjattu uudella
+laatukorjauskierroksella. Arvio perustuu raporttiin ja välituloksiin, ei uuteen
+alkuperäissivujen faktantarkistukseen.
+
+### Tietojen säilyminen ja varmistukset
+
+Admin-tili säilyi uudelleenjulkaisujen yli. Tuotantotietokannasta tehtiin SQLite
+backup -rajapinnalla eheystarkistettu varmistus ja käyttäjä latasi sen omalle
+koneelleen projektin ulkopuolelle. Tämä kopio tehtiin ennen testitiliä ja raportteja;
+uusi testien jälkeinen varmistus ja sen lataaminen ovat vielä vahvistamatta.
+
+Railwayn Backups-näkymä ilmoitti uusien varmistusten ja ajastusten vaativan
+Pro-tilauksen. Hobbyssa käytössä on tässä vaiheessa manuaalinen SQLite-varmistus,
+ei automaattinen varmistusaikataulu. Palautus uuteen tietokantaan on testattu
+paikallisesti; tuotantovarmistuksen varsinainen palautusharjoitus on tekemättä.
+Yhden palvelinprosessin työnkulku keskeyttää käynnissä olevat tutkimukset
+palvelimen käynnistyessä uudelleen.
 
 ## Säilytetty arviointiaineisto
 

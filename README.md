@@ -2,7 +2,11 @@
 
 Kokeellinen portfoliodemo, joka tuottaa verkkolähteisiin perustuvia **kilpailijavertailuja**
 ja **markkinatutkimuksia**. Markkinatutkimuksessa voi tarkastella nykytilaa tai kehitystä.
-Raportit kuvaavat olemassa olevaa tietoa; ne eivät kehitä käyttäjälle yritysideoita tai strategioita.
+Raportit ovat tekoälyn tuottamia ja voivat sisältää virheitä. Ne kuvaavat olemassa
+olevaa tietoa eivätkä kehitä käyttäjälle yritysideoita tai strategioita.
+
+**[Avaa julkaistu demo](https://airesearchassistant-production-967c.up.railway.app)**
+— esimerkkiraportit ovat avoimia kaikille. Uuden tutkimustilin luominen vaatii kutsukoodin.
 
 ## Ominaisuudet
 

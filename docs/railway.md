@@ -61,8 +61,11 @@ Aseta se `ADMIN_USER_IDS`-muuttujaan ja julkaise uudelleen. Älä arvaa tunniste
 
 ## Varmuuskopiointi ja palautus
 
-Ota Railwayn volumen automaattiset varmuuskopiot käyttöön palvelun asetuksista.
-Tee lisäksi SQLite-yhteensopiva tiedostovarmistus palvelun sisällä ennen muutoksia:
+Käyttöönotossa 23.10.2026 Railwayn Backups-näkymä ilmoitti uusien varmistusten ja
+ajastusten vaativan Pro-tilauksen. Hobby-demossa varmistukset tehdään toistaiseksi
+manuaalisesti alla olevalla komennolla ja ladataan myös palvelun ulkopuolelle.
+Pysyvä volume ei yksin ole varmuuskopio. Tee SQLite-yhteensopiva tiedostovarmistus
+palvelun sisällä testikierrosten ja tärkeiden muutosten jälkeen sekä ennen päivityksiä:
 
 ```sh
 /app/.venv/bin/python -m scripts.database_backup /data/app.db /data/backups/ennen-paivitysta.db
