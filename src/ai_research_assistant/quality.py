@@ -56,8 +56,8 @@ def review_output(raw: str, *, sources: dict, brief: dict, previous: list,
     from .evidence import evidence_ledger, accepted_sources
     try:
         raw = render_references(raw, sources, brief.get('language', 'suomi'))
-    except ValueError:
-        return False, "Use only registered source IDs such as [S1]; never invent a source ID."
+    except ValueError as exc:
+        return False, str(exc) + ". Use only registered source IDs or exact registered URLs."
     if not raw.strip():
         return False, "Write a nonempty answer to the assigned task."
     if {url for _, url in LINK.findall(raw)} - sources.keys():

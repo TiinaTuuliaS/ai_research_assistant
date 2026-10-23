@@ -1,7 +1,7 @@
 """Run-local source identity and dates, owned by the application, not agents."""
 from datetime import date
 import re
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import HttpUrl
 
@@ -42,6 +42,15 @@ def register_sources(sources):
     return sources
 
 
+def source_url_key(url):
+    # Only this known tracking parameter is ignored. Keep content parameters,
+    # fragments, path spelling and query ordering unchanged.
+    parts = urlsplit(str(HttpUrl(url)))
+    query = '&'.join(part for part in parts.query.split('&')
+                     if part and part.split('=', 1)[0] != 'srsltid')
+    return urlunsplit(parts._replace(query=query))
+
+
 def resolve_source(reference, sources):
     register_sources(sources)
     for url, source in sources.items():
@@ -52,7 +61,12 @@ def resolve_source(reference, sources):
         normalized = str(HttpUrl(reference))
     except ValueError:
         return None
-    return next((url for url in sources if str(HttpUrl(url)) == normalized), None)
+    exact = next((url for url in sources if str(HttpUrl(url)) == normalized), None)
+    if exact:
+        return exact
+    key = source_url_key(normalized)
+    matches = [url for url in sources if source_url_key(url) == key]
+    return matches[0] if len(matches) == 1 else None
 
 
 def render_references(text, sources, language='suomi'):
@@ -77,13 +91,31 @@ def render_references(text, sources, language='suomi'):
     unknown = {sid for group in REFERENCE.findall(text) for sid in SOURCE_ID.findall(group)} - by_id.keys()
     if unknown:
         raise ValueError('Unknown source IDs: ' + ', '.join(sorted(unknown)))
-    # Old stage text can contain bare URLs. Check those as well so a typo
-    # cannot slip past the Markdown-only validator into accepted evidence.
-    without_links = re.sub(r'\[[^\]\n]+\]\(<?https?://[^\s<>]+?>?\)', '', text)
-    for url in re.findall(r'https?://[^\s<>\[\]()]+', without_links):
-        if resolve_source(url.rstrip('.,;'), sources) is None:
-            raise ValueError('Unregistered source URL')
     label = 'Lähde' if language != 'english' else 'Source'
+    link_pattern = re.compile(r'\[([^\]\n]+)\]\(<?(https?://[^\s<>]+?)>?\)')
+    def normalize_link(match):
+        original = resolve_source(match[2], sources)
+        return f'[{match[1]}]({original})' if original else match[0]
+    text = link_pattern.sub(normalize_link, text)
+    # Validate bare URLs outside Markdown links and resolve safe aliases only.
+    def normalize_bare(match):
+        token = match[0]
+        url = token.rstrip('.,;')
+        original = resolve_source(url, sources)
+        if original is None:
+            raise ValueError('Unregistered source URL: ' + url)
+        if original != url:
+            sid = sources[original]['source_id']
+            return f'[{label} {sid}]({original})' + token[len(url):]
+        return token
+    parts = []
+    end = 0
+    for match in link_pattern.finditer(text):
+        parts.append(re.sub(r'https?://[^\s<>\[\]()]+', normalize_bare, text[end:match.start()]))
+        parts.append(match[0])
+        end = match.end()
+    parts.append(re.sub(r'https?://[^\s<>\[\]()]+', normalize_bare, text[end:]))
+    text = ''.join(parts)
     return REFERENCE.sub(lambda m: ' '.join(f'[{label} {sid}]({by_id[sid]})'
                          for sid in dict.fromkeys(SOURCE_ID.findall(m[1]))), text)
 
